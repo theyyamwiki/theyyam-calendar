@@ -17,7 +17,17 @@ jobs:
 
       - name: Download latest CSV from Google Sheet
         run: |
-          curl -L -o data.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
+          curl -L -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
+            -o data.csv \
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
+
+          echo "----- ആദ്യത്തെ 3 വരികൾ -----"
+          head -n 3 data.csv
+
+          if ! head -c 50 data.csv | grep -qi "kavu_name"; then
+            echo "❌ ഇത് CSV അല്ല (HTML/error page ആയിരിക്കാം). data.csv overwrite ചെയ്യുന്നില്ല."
+            exit 1
+          fi
 
       - name: Commit and push if changed
         run: |
