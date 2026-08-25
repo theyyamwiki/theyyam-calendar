@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" id="htmlRoot">
 <head>
@@ -7,6 +6,7 @@
     <title id="pageTitle">Theyyam Calendar</title>
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap');
@@ -42,7 +42,7 @@
         .lang-btn.active:hover { background-color: #555; }
 
         .quick-actions-bar {
-            display: flex; justify-content: space-between; align-items: center;
+            display: flex; justify-content: center; align-items: center;
             gap: 8px; margin: 8px 0; flex-wrap: wrap;
         }
         .quick-action-btn {
@@ -54,14 +54,6 @@
         .quick-action-btn:hover { background-color: #2e7d32; }
         #apkDownloadBtn { background-color: #6a1b9a; }
         #apkDownloadBtn:hover { background-color: #8e24aa; }
-        .visit-counter-inline {
-            font-size: .8em; color: #555; font-weight: 700;
-            display: flex; align-items: center; gap: 4px;
-        }
-        @media (max-width:450px) {
-            .quick-actions-bar { justify-content: center; }
-            .visit-counter-inline { order: 3; width: 100%; text-align: center; justify-content: center; margin-top: 4px; }
-        }
 
         h1 { text-align: center; color: #c62828; margin: 0 0 3px 0; font-size: 1.7em; padding-top: 5px; line-height: 1.2 }
         .sub-heading { text-align: center; margin-bottom: 5px; border-bottom: 3px double #ffb300; padding-bottom: 3px }
@@ -236,14 +228,6 @@
         </div>
 
         <div class="quick-actions-bar" id="quickActionsBar">
-            <button type="button" id="addToGCalBtn" class="quick-action-btn">
-                <i class="fas fa-calendar-plus"></i> <span id="addToGCalLabel"></span>
-            </button>
-
-            <div class="visit-counter-inline" id="visitCounterBox" title="Total Visits">
-                <i class="fas fa-eye"></i> <span id="visitCountValue">...</span>
-            </div>
-
             <a href="#" id="apkDownloadBtn" class="quick-action-btn" target="_blank" rel="noopener noreferrer">
                 <i class="fas fa-download"></i> <span id="apkDownloadLabel"></span>
             </a>
@@ -325,56 +309,11 @@
 
 <script>
     // ===================================================================================
-    // ⚠️ ഏറ്റവും പ്രധാനം: ഇവിടെ നിങ്ങളുടെ deployed Apps Script Web App URL ചേർക്കുക.
-    // Apps Script Editor-ൽ Deploy > Manage deployments -ൽ നിന്ന് കോപ്പി ചെയ്യുക (/exec എന്ന് അവസാനിക്കണം)
+    // 🆕 ഇനി Google Apps Script ആവശ്യമില്ല. ഇതേ repo-യിലെ 'data.csv' ഫയലിൽ നിന്നാണ്
+    // ഡാറ്റ വരുന്നത്. പുതിയ Theyyam ചേർക്കാൻ / edit ചെയ്യാൻ, GitHub-ൽ data.csv
+    // ഫയൽ തുറന്ന് "Edit" ബട്ടൺ ക്ലിക്ക് ചെയ്ത് table view-ൽ edit ചെയ്താൽ മതി.
     // ===================================================================================
-    const APPS_SCRIPT_BASE_URL = 'https://script.google.com/macros/s/AKfycbwbIcB-xvoAB8fnXDZ3eMEdd4kya14n2FOIvMSNVcEsphRkY8tFTQudxvoVxWEo0c6EVA/exec';
-
-    // ===================================================================================
-    // 🆕 JSONP ഹെൽപ്പർ — google.script.run-ന് പകരം, ഏത് ഡൊമെയ്നിൽ നിന്നും
-    // (GoDaddy hosting ഉൾപ്പെടെ) Apps Script ഡാറ്റ വിളിക്കാൻ ഇത് ഉപയോഗിക്കുന്നു.
-    // <script> ടാഗ് വഴിയായതിനാൽ CORS പ്രശ്നം ഉണ്ടാവില്ല / iframe/redirect ബ്ലോക്കിംഗ് ഉണ്ടാവില്ല.
-    // ===================================================================================
-    let jsonpCounter = 0;
-    function jsonpRequest(url, successCb, failCb, timeoutMs) {
-        const cbName = 'jsonp_cb_' + Date.now() + '_' + (jsonpCounter++);
-        let settled = false;
-
-        const cleanup = () => {
-            delete window[cbName];
-            if (script.parentNode) script.parentNode.removeChild(script);
-            if (timeoutId) clearTimeout(timeoutId);
-        };
-
-        window[cbName] = function (data) {
-            if (settled) return;
-            settled = true;
-            cleanup();
-            if (data && data.error) {
-                failCb({ message: data.error });
-            } else {
-                successCb(data);
-            }
-        };
-
-        const script = document.createElement('script');
-        const sep = url.indexOf('?') === -1 ? '?' : '&';
-        script.src = url + sep + 'callback=' + cbName + '&_=' + Date.now();
-        script.onerror = function () {
-            if (settled) return;
-            settled = true;
-            cleanup();
-            failCb({ message: 'Network error while contacting Apps Script.' });
-        };
-        document.body.appendChild(script);
-
-        const timeoutId = setTimeout(function () {
-            if (settled) return;
-            settled = true;
-            cleanup();
-            failCb({ message: 'Request timed out.' });
-        }, timeoutMs || 15000);
-    }
+    const DATA_CSV_URL = 'data.csv';
 
     // ===================================================================================
     // I18N: translations dictionary. UI text only -- sheet data is never translated here.
@@ -436,12 +375,11 @@
             directionsButton: "Directions to the Kavu ... Click here ...",
             filterModalSuffix: " - Theyyam Festivals",
             noEventsForFilter: (label) => `No Theyyam festivals currently available for ${label}.`,
-            errorLoadingPrefix: (msg) => `Error loading data: <strong>${msg}</strong>. Please check that your Apps Script deployment is correct and that the mandatory columns (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) exist in the sheet.`,
+            errorLoadingPrefix: (msg) => `Error loading data: <strong>${msg}</strong>. Please check that <strong>data.csv</strong> exists in the repo and that the mandatory columns (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) exist as headers.`,
             dataUpdated: (d,t) => `Data updated: ${d} @ ${t}`,
             lastUpdatedUnavailable: "Last updated time not available.",
             noResultsFound: (term) => `No results found for "<strong>${term}</strong>".`,
             gasNotFound: "Google Apps Script environment not found.",
-            addToGCalLabel: "Add to Calendar",
             apkDownloadLabel: "Download App",
             locale: "en-IN",
             filterLabels: {
@@ -459,7 +397,7 @@
             }
         },
         ml: {
-            pageTitle: "\u0d24\u0d46\u0d2f\u0d4d\u0d2f\u0d02 \u0d15\u0d32\u0d23\u0d4d\u0d1f\u0d7c",
+            pageTitle: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d32\u0d23്\u0d1f\u0d7c",
             subHeading: "\u0d24\u0d46\u0d2f്\u0d2f\u0d35\u0d41\u0d02 \u0d24\u0d3f\u0d31\u0d2f\u0d41\u0d02 \u0d05\u0d28\u0d41\u0d37്\u0d20\u0d3e\u0d28\u0d2e\u0d3e\u0d23്. \u0d15\u0d3e\u0d35്/\u0d24\u0d31\u0d35\u0d3e\u0d1f് /\u0d26\u0d47\u0d35\u0d38്\u0d25\u0d3e\u0d28\u0d02/ \u0d05\u0d27\u0d3f\u0d15\u0d3e\u0d30\u0d3f\u0d15്\u0d15\u0d47\u0d7e \u0d28\u0d7d\u0d15\u0d41\u0d28്\u0d28 \u0d28\u0d3f\u0d7c\u0d26്\u0d26\u0d47\u0d36\u0d19്\u0d19\u0d7e \u0d15\u0d7c\u0d36\u0d28\u0d2e\u0d3e\u0d2f\u0d3f \u0d2a\u0d3e\u0d32\u0d3f\u0d15്\u0d15\u0d41\u0d15.\u0d2b\u0d4b\u0d1f്\u0d1f\u0d4b/\u0d35\u0d40\u0d21\u0d3f\u0d2f\u0d4b \u0d05\u0d15\u0d32\u0d02 \u0d2a\u0d3e\u0d32\u0d3f\u0d1a്\u0d1a\u0d41\u0d15\u0d4a\u0d23്\u0d1f് \u0d2e\u0d3e\u0d24്\u0d30\u0d02",
             warningBox: "\u0d15\u0d34\u0d3f\u0d1e്\u0d1e \u0d35\u0d7c\u0d37\u0d02 \u0d32\u0d2d\u0d3f\u0d1a്\u0d1a \u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് /\u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a് \u0d2a്\u0d30\u0d15\u0d3e\u0d30\u0d02 \u0d24\u0d2f്\u0d2f\u0d31\u0d3e\u0d15്\u0d15\u0d3f\u0d2f\u0d24\u0d3e\u0d23്\u0d1f\u0d47 \u0d15\u0d32\u0d23്\u0d1f\u0d7c .\u0d06\u0d2f\u0d24\u0d41\u0d15\u0d4a\u0d23്\u0d1f് \u0d2e\u0d32\u0d2f\u0d3e\u0d33 \u0d2e\u0d3e\u0d38\u0d02 \u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d15്\u0d15\u0d28\u0d41\u0d38\u0d30\u0d3f\u0d1a് \u0d2e\u0d3e\u0d31്\u0d31\u0d02\u0d09\u0d23്\u0d1f\u0d3e\u0d15\u0d3e\u0d02. \u0d24\u0d40\u0d2f\u0d24\u0d3f \u0d15\u0d4b\u0d33\u0d24്\u0d24\u0d3f\u0d7d \u0d15്\u0d32\u0d3f\u0d15് \u0d1a\u0d46\u0d2f്\u0d24\u0d3e\u0d7d \u0d06 \u0d26\u0d3f\u0d35\u0d38\u0d24്\u0d24\u0d46 \u0d24\u0d46\u0d2f്\u0d2f\u0d19്\u0d19\u0d7e \u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് \u0d09\u0d7e\u0d2a്\u0d2a\u0d46\u0d1f\u0d46 \u0d32\u0d2d്\u0d2f\u0d15്\u0d15\u0d41\u0d02 ,\u0d09\u0d31\u0d2a്\u0d2a\u0d41 \u0d35\u0d30\u0d41\u0d24്\u0d24\u0d3f\u0d2f\u0d35 \u0d2a\u0d1a്\u0d1a\u0d28\u0d3f\u0d31\u0d24്\u0d24\u0d3f\u0d7d \u0d15\u0d3e\u0d23\u0d3e\u0d02",
             statusHeader: "\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
@@ -514,12 +452,11 @@
             directionsButton: "\u0d15\u0d3e\u0d35\u0d3f\u0d32\u0d47\u0d15്\u0d15\u0d41\u0d33്\u0d33 \u0d35\u0d34\u0d3f ... \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15്\u0d32\u0d3f\u0d15് \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d15 ...",
             filterModalSuffix: " - \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
             noEventsForFilter: (label) => `\u0d28\u0d3f\u0d32\u0d35\u0d3f\u0d7d ${label} \u0d07\u0d28\u0d24്\u0d24\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.`,
-            errorLoadingPrefix: (msg) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21്\u200c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d24\u0d3f\u0d7d \u0d2a\u0d3f\u0d36\u0d15് \u0d38\u0d02\u0d2d\u0d35\u0d3f\u0d1a്\u0d1a\u0d41: <strong>${msg}</strong>. \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f Apps Script Deployment \u0d36\u0d30\u0d3f\u0d2f\u0d3e\u0d23\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02, \u0d37\u0d40\u0d31്\u0d31\u0d3f\u0d32\u0d46 \u0d28\u0d3f\u0d7c\u0d2c\u0d28്\u0d27\u0d3f\u0d24 \u0d15\u0d4b\u0d33\u0d19്\u0d19\u0d7e (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02 \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d3f\u0d15്\u0d15\u0d41\u0d15.`,
+            errorLoadingPrefix: (msg) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21്\u200c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d24\u0d3f\u0d7d \u0d2a\u0d3f\u0d36\u0d15് \u0d38\u0d02\u0d2d\u0d35\u0d3f\u0d1a്\u0d1a\u0d41: <strong>${msg}</strong>. \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f <strong>data.csv</strong> repo-\u0d2f\u0d3f\u0d7d \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02, \u0d05\u0d24\u0d3f\u0d7d \u0d28\u0d3f\u0d7c\u0d2c\u0d28്\u0d27\u0d3f\u0d24 \u0d15\u0d4b\u0d33\u0d19്\u0d19\u0d7e (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) headers \u0d06\u0d2f\u0d3f \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02 \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d3f\u0d15്\u0d15\u0d41\u0d15.`,
             dataUpdated: (d,t) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24\u0d24്: ${d} @ ${t}`,
             lastUpdatedUnavailable: "\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24 \u0d38\u0d2e\u0d2f\u0d02 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
             noResultsFound: (term) => `"<strong>${term}</strong>" - \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a് \u0d32\u0d2d\u0d3f\u0d1a്\u0d1a\u0d3f\u0d32്\u0d32.`,
             gasNotFound: "Google Apps Script environment \u0d15\u0d23്\u0d1f\u0d46\u0d24്\u0d24\u0d3f\u0d2f\u0d3f\u0d32്\u0d32.",
-            addToGCalLabel: "\u0d15\u0d32\u0d23്\u0d1f\u0d31\u0d3f\u0d7d \u0d1a\u0d47\u0d7c\u0d15്\u0d15\u0d41\u0d15",
             apkDownloadLabel: "\u0d06\u0d2a്\u0d2a് \u0d21\u0d57\u0d7a\u0d32\u0d4b\u0d21്",
             locale: "ml-IN",
             filterLabels: {
@@ -664,9 +601,7 @@
     const theyyamFilterButtons = document.getElementById('theyyamFilterButtons');
     const langBtnEn = document.getElementById('langBtnEn');
     const langBtnMl = document.getElementById('langBtnMl');
-    const addToGCalBtn = document.getElementById('addToGCalBtn');
     const apkDownloadBtn = document.getElementById('apkDownloadBtn');
-    const visitCountValue = document.getElementById('visitCountValue');
 
     const FULL_LIST_FILTERS = [
         { key: 'kativanur_veeran', color: '#FF5722' },
@@ -739,12 +674,8 @@
 
     function handleSuccess(allRows) {
         try {
-            let lastUpdatedISO = null;
-            if (allRows.length > 0 && allRows[allRows.length - 1].lastUpdated) {
-                lastUpdatedISO = allRows.pop().lastUpdated;
-            }
             if (!Array.isArray(allRows)) {
-                throw new Error("Apps Script response is not an array of events or the data is empty.");
+                throw new Error("CSV response is not a list of events or the data is empty.");
             }
             const mandatoryHeaders = ['kavu_name', 'start_date', 'end_date', 'theyyam_list'];
             ALL_EVENTS = allRows.filter(row =>
@@ -780,7 +711,7 @@
             const defaultEvents = getEventsForDate(TODAY);
             showDetailsModal(defaultEvents, TODAY);
             updateScrollTicker();
-            updateLastUpdated(lastUpdatedISO);
+            updateLastUpdated(new Date().toISOString());
             renderSpecialFilters();
             renderThirumuttamUpdates();
         } catch (error) {
@@ -791,26 +722,31 @@
 
     function handleFailure(error) {
         console.error("Error fetching data:", error);
-        statusMessage.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#c62828;"></i> ` + t('errorLoadingPrefix')(error.message || 'Apps Script execution failed');
+        statusMessage.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#c62828;"></i> ` + t('errorLoadingPrefix')(error.message || 'CSV fetch failed');
     }
 
-    // 🆕 google.script.run.getFullData() -ന് പകരം, JSONP വഴി Apps Script-ന്റെ
-    // ?action=data എൻഡ്‌പോയിന്റ് വിളിക്കുന്നു — ഏത് ഡൊമെയ്നിൽ നിന്നും വർക്ക് ചെയ്യും.
+    // 🆕 Apps Script JSONP-ന് പകരം, ഇതേ repo-യിലെ data.csv ഫയൽ fetch ചെയ്ത്
+    // PapaParse ഉപയോഗിച്ച് parse ചെയ്യുന്നു (same-origin ആയതിനാൽ CORS പ്രശ്നം ഇല്ല).
     function fetchSheetData() {
-        jsonpRequest(APPS_SCRIPT_BASE_URL + '?action=data', handleSuccess, handleFailure);
-    }
-
-    // ===== Visit counter (Apps Script + Sheet controlled) =====
-    function fetchVisitCount() {
-        jsonpRequest(
-            APPS_SCRIPT_BASE_URL + '?action=visitcount',
-            (count) => {
-                visitCountValue.textContent = (count !== null && count !== undefined)
-                    ? Number(count).toLocaleString(t('locale'))
-                    : '-';
-            },
-            () => { visitCountValue.textContent = '-'; }
-        );
+        fetch(DATA_CSV_URL + '?_=' + Date.now())
+            .then(function (res) {
+                if (!res.ok) throw new Error('data.csv ' + t('notAvailable') + ' (HTTP ' + res.status + ')');
+                return res.text();
+            })
+            .then(function (csvText) {
+                const parsed = Papa.parse(csvText, {
+                    header: true,
+                    skipEmptyLines: true,
+                    transformHeader: function (h) { return h.trim(); }
+                });
+                if (parsed.errors && parsed.errors.length > 0) {
+                    console.warn('CSV parse warnings:', parsed.errors);
+                }
+                handleSuccess(parsed.data);
+            })
+            .catch(function (err) {
+                handleFailure(err);
+            });
     }
 
     function renderThirumuttamUpdates() {
@@ -1200,13 +1136,6 @@
     prevMonthBtn.onclick = () => changeMonth(-1);
     nextMonthBtn.onclick = () => changeMonth(1);
 
-    // ===== Quick action bar behaviour =====
-    addToGCalBtn.onclick = () => {
-        const icsUrl = APPS_SCRIPT_BASE_URL + '?type=calendar';
-        const calUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(icsUrl)}`;
-        window.open(calUrl, '_blank');
-    };
-
     // ⚠️ GitHub-ൽ APK അപ്‌ലോഡ് ചെയ്ത ശേഷം ആ ഡയറക്ട് ഡൗൺലോഡ് ലിങ്ക് ഇവിടെ ചേർക്കുക
     const APK_DOWNLOAD_URL = '';
 
@@ -1286,7 +1215,6 @@
         document.getElementById('footerMessage1').textContent = t('footerMessage1');
         document.getElementById('footerMessage2').textContent = t('footerMessage2');
         document.getElementById('lastUpdatedLabel').textContent = t('lastUpdatedLabel');
-        document.getElementById('addToGCalLabel').textContent = t('addToGCalLabel');
         document.getElementById('apkDownloadLabel').textContent = t('apkDownloadLabel');
 
         const dayNamesRow = document.getElementById('dayNamesRow');
@@ -1328,10 +1256,8 @@
 
     applyLanguage();
 
-    // 🆕 ഇനി google.script.run ഉള്ളോ ഇല്ലയോ എന്ന് നോക്കേണ്ടതില്ല —
-    // JSONP വഴി എപ്പോഴും (ഏത് ഡൊമെയ്നിൽ ആയാലും) ഡാറ്റ ലോഡ് ചെയ്യും.
+    // 🆕 ഇനി Apps Script ആവശ്യമില്ല — data.csv എപ്പോഴും (ഏത് hosting ആയാലും) fetch ചെയ്ത് ലോഡ് ചെയ്യും.
     fetchSheetData();
-    fetchVisitCount();
     startAutoUpdateTimer();
 </script>
     </body>
