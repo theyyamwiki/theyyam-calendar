@@ -1,0 +1,28 @@
+name: Sync Google Sheet to data.csv
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Download latest CSV from Google Sheet
+        run: |
+          curl -L -o data.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
+
+      - name: Commit and push if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.csv
+          git diff --staged --quiet || git commit -m "Auto-sync data.csv from Google Sheet"
+          git push
