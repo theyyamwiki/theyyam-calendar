@@ -1,0 +1,1338 @@
+
+<!DOCTYPE html>
+<html lang="en" id="htmlRoot">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="pageTitle">Theyyam Calendar</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap');
+
+        .main-banner{ text-align:center; margin-bottom:10px; }
+        .banner-image{ width:100%; height:auto; display:block; border-radius:10px; }
+        body {
+            font-family: 'Noto Sans Malayalam', 'Arial', sans-serif;
+            margin: 0; padding: 0; background-color: #fc0505; color: #333; font-size: .95em
+        }
+        .container {
+            max-width: 950px; margin: 20px auto; padding: 16px;
+            background-color: #f06e67;
+            border-style: solid;
+            border-width: 32px;
+            border-image-source: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='224' height='224'%3E%3Cdefs%3E%3Cpattern id='dH' x='32' y='0' width='40' height='32' patternUnits='userSpaceOnUse'%3E%3Crect width='40' height='32' fill='white'/%3E%3Cpolygon points='10,8 18,16 10,24 2,16' fill='%23e0272f'/%3E%3Cpolygon points='30,8 38,16 30,24 22,16' fill='%23111111'/%3E%3C/pattern%3E%3Cpattern id='dV' x='0' y='32' width='32' height='40' patternUnits='userSpaceOnUse'%3E%3Crect width='32' height='40' fill='white'/%3E%3Cpolygon points='16,2 24,10 16,18 8,10' fill='%23111111'/%3E%3Cpolygon points='16,22 24,30 16,38 8,30' fill='%23e0272f'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='224' height='224' fill='white'/%3E%3Crect x='32' y='0' width='160' height='32' fill='url(%23dH)'/%3E%3Crect x='32' y='192' width='160' height='32' fill='url(%23dH)'/%3E%3Crect x='0' y='32' width='32' height='160' fill='url(%23dV)'/%3E%3Crect x='192' y='32' width='32' height='160' fill='url(%23dV)'/%3E%3Cpolygon points='16,8 24,16 16,24 8,16' fill='%23111111'/%3E%3Cpolygon points='208,8 216,16 208,24 200,16' fill='%23e0272f'/%3E%3Cpolygon points='16,200 24,208 16,216 8,208' fill='%23e0272f'/%3E%3Cpolygon points='208,200 216,208 208,216 200,208' fill='%23111111'/%3E%3Crect x='0' y='0' width='224' height='3' fill='%23ff2222'/%3E%3Crect x='0' y='221' width='224' height='3' fill='%23ff2222'/%3E%3Crect x='0' y='0' width='3' height='224' fill='%23ff2222'/%3E%3Crect x='221' y='0' width='3' height='224' fill='%23ff2222'/%3E%3Crect x='0' y='29' width='224' height='3' fill='%23ff2222'/%3E%3Crect x='0' y='192' width='224' height='3' fill='%23ff2222'/%3E%3Crect x='29' y='0' width='3' height='224' fill='%23ff2222'/%3E%3Crect x='192' y='0' width='3' height='224' fill='%23ff2222'/%3E%3C/svg%3E");
+            border-image-slice: 32;
+            border-image-repeat: round;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, .2)
+        }
+        .lang-toggle-bar {
+            text-align: right; margin-bottom: 8px; display: flex;
+            justify-content: flex-end; align-items: center; gap: 6px; flex-wrap: wrap;
+        }
+        .lang-label { font-size: .8em; color: #666; font-weight: 700; margin-right: 2px; }
+        .lang-btn {
+            background-color: #eee; color: #333; border: 1px solid #ccc; padding: 6px 14px;
+            border-radius: 20px; cursor: pointer; font-size: .85em; font-weight: 700;
+            transition: background-color .2s;
+        }
+        .lang-btn:hover { background-color: #ddd; }
+        .lang-btn.active { background-color: #333; color: #fff; border-color: #333; }
+        .lang-btn.active:hover { background-color: #555; }
+
+        .quick-actions-bar {
+            display: flex; justify-content: space-between; align-items: center;
+            gap: 8px; margin: 8px 0; flex-wrap: wrap;
+        }
+        .quick-action-btn {
+            background-color: #1b5e20; color: white; border: none; text-decoration: none;
+            padding: 6px 12px; border-radius: 20px; font-size: .78em; font-weight: 700;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 5px;
+            transition: background-color .2s; white-space: nowrap;
+        }
+        .quick-action-btn:hover { background-color: #2e7d32; }
+        #apkDownloadBtn { background-color: #6a1b9a; }
+        #apkDownloadBtn:hover { background-color: #8e24aa; }
+        .visit-counter-inline {
+            font-size: .8em; color: #555; font-weight: 700;
+            display: flex; align-items: center; gap: 4px;
+        }
+        @media (max-width:450px) {
+            .quick-actions-bar { justify-content: center; }
+            .visit-counter-inline { order: 3; width: 100%; text-align: center; justify-content: center; margin-top: 4px; }
+        }
+
+        h1 { text-align: center; color: #c62828; margin: 0 0 3px 0; font-size: 1.7em; padding-top: 5px; line-height: 1.2 }
+        .sub-heading { text-align: center; margin-bottom: 5px; border-bottom: 3px double #ffb300; padding-bottom: 3px }
+        .chayilyam-oval {
+            display: inline-block; background-color: #000; color: #ffb300; padding: 3px 10px;
+            border-radius: 15px; font-weight: 700; font-size: .9em; letter-spacing: 1px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, .3)
+        }
+        .status-message { text-align: center; padding: 20px; font-size: .9em; color: #e65100 }
+        #statusDisplay { padding: 5px 0; margin-bottom: 10px }
+        .warning-box {
+            background-color: #fff3e0; border: 1px solid #ff9800; border-left: 5px solid #ff9800;
+            padding: 8px; margin: 10px 0; border-radius: 5px; font-size: .85em; color: #333
+        }
+        .date-limit-notice { font-size: 0.85em; font-style: italic; color: #2196f3; font-weight: 400; }
+        .status-header-common { text-align: center; font-size: 1.05em; font-weight: 700; color: #007bff; margin-bottom: 8px }
+        .status-icon-bar {
+            display: flex; justify-content: space-around; border: 1px solid #c62828;
+            border-radius: 5px; padding: 5px 0; margin-bottom: 10px
+        }
+        .status-btn {
+            border: none; cursor: pointer; color: #333; font-size: 1em; font-weight: 700;
+            padding: 5px 10px; text-align: center; transition: background-color .2s;
+            border-radius: 5px; margin: 0 5px; display: inline-block;
+        }
+        .status-btn:hover { background-color: #ffe0b2 }
+        .status-btn i { margin-right: 5px; color: #c62828 }
+        .scroll-ticker-container {
+            overflow: hidden; background-color: #1b5e20; color: white; padding: 5px 0;
+            margin-bottom: 10px; white-space: nowrap; box-shadow: 0 2px 5px rgba(0, 0, 0, .1);
+        }
+        .scroll-ticker-content {
+            display: inline-block; padding-left: 100%; animation: ticker-scroll 30s linear infinite;
+            font-weight: 700; font-size: 1em; color: white;
+        }
+        @keyframes ticker-scroll { 0% { transform: translate3d(0, 0, 0) } 100% { transform: translate3d(-100%, 0, 0) } }
+        .thirumuttam-short-event { border-radius: 4px; margin-bottom: 8px; padding: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .thirumuttam-short-event:hover { filter: brightness(0.95); }
+        .calendar-layout{ display:flex; gap:15px; align-items:flex-start; margin-top:10px; }
+        .calendar-left{ width:42%; }
+        .calendar-right{ width:58%; position:sticky; top:10px; }
+        .fixed-details-panel{
+            background:#fff; border:2px solid #c62828; border-radius:10px; padding:12px;
+            max-height:90vh; overflow-y:auto; box-shadow:0 2px 10px rgba(0,0,0,.15);
+        }
+        @media (max-width:768px){
+            .calendar-layout{ flex-direction:column; }
+            .calendar-left, .calendar-right{ width:100%; }
+            .calendar-right{ position:relative; top:auto; }
+        }
+        .calendar-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 8px; padding: 8px 0; border-bottom: 2px solid #333
+        }
+        .nav-btn {
+            background-color: #c62828; color: white; border: none; padding: 5px 8px;
+            cursor: pointer; border-radius: 4px; transition: background-color .3s; font-size: .8em
+        }
+        .current-month-year { font-size: 1.2em; font-weight: 700; color: #ffb300; text-shadow: 1px 1px 2px #333 }
+        .day-names {
+            display: grid; grid-template-columns: repeat(7, 1fr); text-align: center;
+            font-weight: 700; color: #333; padding: 4px 0; border-bottom: 1px solid #ccc;
+            font-size: .68em; background-color: #fbe9e7
+        }
+        .day-names > div { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding: 0 1px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px }
+        .day-cell {
+            position: relative; padding-bottom: 70%; height: 0; border: 1px solid #c62828;
+            border-radius: 3px; background-color: #fff; cursor: pointer
+        }
+        .day-content {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 4px;
+            box-sizing: border-box; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start
+        }
+        .day-number { font-weight: 700; color: #333; font-size: 1.05em }
+        .event-count {
+            display: block; background-color: #ffb300; color: #333; font-weight: 700;
+            font-size: .7em; padding: 1px 3px; border-radius: 7px; margin-top: 1px;
+            text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 90%;
+        }
+        .today { border: 3px solid #f00; box-shadow: 0 0 5px rgba(255, 0, 0, .5) }
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto; background-color: rgba(0, 0, 0, .6)
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 5% auto; padding: 15px; border: 1px solid #888;
+            width: 95%; max-width: 550px; border-radius: 8px; position: relative;
+            max-height: 90vh; overflow-y: auto;
+        }
+        .close-btn { color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer; }
+        .close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
+        .event-details-box {
+            padding: 8px; margin-bottom: 10px; border-radius: 5px; border: 1px solid #ddd;
+            font-size: .9em; box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+        }
+        .pinned-boxes-row {
+            display: flex; gap: 10px; margin-bottom: 12px; align-items: stretch;
+        }
+        @media (max-width:600px) {
+            .pinned-boxes-row { flex-direction: column; }
+        }
+        .remarks-scroll-box {
+            max-height: 50px; overflow-y: auto; border: 1px dashed #ccc; padding: 5px;
+            margin-top: 5px; background-color: #fff;
+        }
+        .remarks-scroll-box p { margin: 0; }
+        .day-status-pill {
+            display: inline-block; background-color: #007bff; color: white; padding: 6px 10px;
+            border-radius: 6px; font-size: .82em; margin-right: 8px; margin-bottom: 8px;
+            line-height: 1.5; font-weight: 700; text-decoration: none; white-space: nowrap;
+        }
+        #searchBoxContainer {
+            margin: 15px 0; padding: 10px; border: 1px solid #c62828; border-radius: 5px; background-color: #fff8e1;
+        }
+        #searchBoxContainer h4 { margin: 0 0 5px 0; color: #c62828; font-size: 1em; }
+        #eventSearch {
+            width: 100%; padding: 10px; border: 1px solid #ffb300; border-radius: 4px;
+            font-size: 1em; box-sizing: border-box; font-family: inherit;
+        }
+        #searchResults { margin-top: 10px; border-top: 1px solid #ffb300; padding-top: 10px; }
+        .search-result-item {
+            padding: 8px; margin-bottom: 5px; border-radius: 4px; background-color: #f8f8f8;
+            cursor: pointer; transition: background-color 0.2s;
+        }
+        .search-result-item:hover { background-color: #eee; }
+        .search-kavu { font-weight: bold; color: #c62828; display: block; }
+        .search-status-line { display: flex; justify-content: space-between; font-size: 0.85em; color: #666; }
+        .search-status { font-weight: 700; padding: 2px 5px; border-radius: 3px; font-size: 0.8em; }
+        .status-past { color: #d32f2f; background-color: #fce4e4; }
+        .status-confirmed { color: #388e3c; background-color: #e8f5e9; }
+        .live-update-box {
+            margin: 15px 0; padding: 15px; border: 2px solid #e91e63; border-radius: 8px;
+            background-color: #fcf4f6; box-shadow: 0 4px 10px rgba(233, 30, 99, 0.2);
+        }
+        .live-update-box h4 {
+            margin: 0 0 10px 0; color: #d81b60; font-size: 1.1em; text-align: center;
+            border-bottom: 2px solid #f06292; padding-bottom: 5px;
+        }
+        #liveUpdateContent { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; padding: 10px; }
+        #theyyamFilterButtons { display: flex; flex-wrap: wrap; justify-content: center; margin-top: 15px; }
+        #theyyamFilterButtons .status-btn { margin: 5px; flex-grow: 0; min-width: 100px; color: white !important; }
+        .footer-note-box {
+            margin-top: 20px; padding-top: 10px; border-top: 2px solid #eee;
+            text-align: center; font-size: 0.85em; color: #666;
+        }
+        .footer-message { margin: 5px 0; }
+        .last-updated { display: block; margin-top: 10px; font-style: italic; }
+        @media (max-width:450px) {
+            .container { padding: 5px; margin: 5px auto; }
+            h1 { font-size: 1.5em; }
+            .status-btn { font-size: 0.9em; padding: 5px; }
+            #liveUpdateContent { grid-template-columns: 1fr; }
+            .search-kavu { font-size: 1em; }
+            .search-status-line { flex-direction: column; align-items: flex-start; }
+            .search-status { margin-top: 3px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="lang-toggle-bar">
+            <span class="lang-label">Language / ഭാഷ:</span>
+            <button id="langBtnEn" class="lang-btn" type="button">English</button>
+            <button id="langBtnMl" class="lang-btn" type="button">മലയാളം</button>
+        </div>
+
+        <div class="main-banner">
+            <img id="mainBannerImage" src="https://raw.githubusercontent.com/theyyamwiki/setting/main/MAL%20TITLE.png" alt="Theyyam Calendar" class="banner-image">
+        </div>
+
+        <div class="quick-actions-bar" id="quickActionsBar">
+            <button type="button" id="addToGCalBtn" class="quick-action-btn">
+                <i class="fas fa-calendar-plus"></i> <span id="addToGCalLabel"></span>
+            </button>
+
+            <div class="visit-counter-inline" id="visitCounterBox" title="Total Visits">
+                <i class="fas fa-eye"></i> <span id="visitCountValue">...</span>
+            </div>
+
+            <a href="#" id="apkDownloadBtn" class="quick-action-btn" target="_blank" rel="noopener noreferrer">
+                <i class="fas fa-download"></i> <span id="apkDownloadLabel"></span>
+            </a>
+        </div>
+
+        <div class="sub-heading"><span class="chayilyam-oval" id="subHeadingText"></span></div>
+
+
+        <div id="statusDisplay">
+            <div class="warning-box" id="warningBoxText"></div>
+
+            <div class="status-header-common">
+                <span id="statusHeaderText"></span>
+                <span class="date-limit-notice" id="dateLimitText"></span>
+            </div>
+
+            <div id="scrollTickerContainer" class="scroll-ticker-container">
+                <div id="scrollTickerContent" class="scroll-ticker-content"></div>
+            </div>
+
+            <div id="liveUpdateBox" class="live-update-box">
+                <h4><span id="liveUpdateHeadingText"></span> <i class="fas fa-satellite-dish"></i></h4>
+                <div id="liveUpdateContent">
+                    <p class="status-message">...................</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="statusMessage" class="status-message"></div>
+
+        <div id="calendarArea" style="display:none;">
+
+            <div class="calendar-header">
+                <button id="prevMonth" class="nav-btn"></button>
+                <div id="currentMonthYear" class="current-month-year"></div>
+                <button id="nextMonth" class="nav-btn" data-next-month-name=""></button>
+            </div>
+
+           <div class="calendar-layout">
+                <div class="calendar-left">
+                    <div class="day-names" id="dayNamesRow"></div>
+                    <div id="calendarGrid" class="calendar-grid"></div>
+                </div>
+                <div class="calendar-right">
+                    <div class="fixed-details-panel">
+                        <h2 id="modalDate"></h2>
+                        <div id="eventDetails">
+                            <p class="status-message" id="eventDetailsPlaceholder"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="searchBoxContainer">
+                <h4 id="searchBoxHeading"></h4>
+                <input type="text" id="eventSearch">
+                <div id="searchResults"></div>
+            </div>
+            <div class="controls">
+                <h4 style="text-align: center; margin-top: 20px; color: #c62828;" id="featuredTheyyamsHeading"></h4>
+                <div id="theyyamFilterButtons"></div>
+            </div>
+        </div>
+
+        <div class="footer-note-box">
+            <div class="footer-message" id="footerMessage1"></div>
+            <div class="footer-message" style="margin-top: 8px; color: #666;"><strong id="footerMessage2"></strong></div>
+            <span class="last-updated"><span id="lastUpdatedLabel"></span><span id="lastUpdatedDate"></span></span>
+        </div>
+    </div>
+
+    <div id="filterModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" id="filterModalClose">&times;</span>
+            <h2 id="filterModalTitle"></h2>
+            <div id="filterEventList"></div>
+        </div>
+    </div>
+
+<script>
+    // ===================================================================================
+    // ⚠️ ഏറ്റവും പ്രധാനം: ഇവിടെ നിങ്ങളുടെ deployed Apps Script Web App URL ചേർക്കുക.
+    // Apps Script Editor-ൽ Deploy > Manage deployments -ൽ നിന്ന് കോപ്പി ചെയ്യുക (/exec എന്ന് അവസാനിക്കണം)
+    // ===================================================================================
+    const APPS_SCRIPT_BASE_URL = 'https://script.google.com/macros/s/AKfycbwbIcB-xvoAB8fnXDZ3eMEdd4kya14n2FOIvMSNVcEsphRkY8tFTQudxvoVxWEo0c6EVA/exec';
+
+    // ===================================================================================
+    // 🆕 JSONP ഹെൽപ്പർ — google.script.run-ന് പകരം, ഏത് ഡൊമെയ്നിൽ നിന്നും
+    // (GoDaddy hosting ഉൾപ്പെടെ) Apps Script ഡാറ്റ വിളിക്കാൻ ഇത് ഉപയോഗിക്കുന്നു.
+    // <script> ടാഗ് വഴിയായതിനാൽ CORS പ്രശ്നം ഉണ്ടാവില്ല / iframe/redirect ബ്ലോക്കിംഗ് ഉണ്ടാവില്ല.
+    // ===================================================================================
+    let jsonpCounter = 0;
+    function jsonpRequest(url, successCb, failCb, timeoutMs) {
+        const cbName = 'jsonp_cb_' + Date.now() + '_' + (jsonpCounter++);
+        let settled = false;
+
+        const cleanup = () => {
+            delete window[cbName];
+            if (script.parentNode) script.parentNode.removeChild(script);
+            if (timeoutId) clearTimeout(timeoutId);
+        };
+
+        window[cbName] = function (data) {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            if (data && data.error) {
+                failCb({ message: data.error });
+            } else {
+                successCb(data);
+            }
+        };
+
+        const script = document.createElement('script');
+        const sep = url.indexOf('?') === -1 ? '?' : '&';
+        script.src = url + sep + 'callback=' + cbName + '&_=' + Date.now();
+        script.onerror = function () {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            failCb({ message: 'Network error while contacting Apps Script.' });
+        };
+        document.body.appendChild(script);
+
+        const timeoutId = setTimeout(function () {
+            if (settled) return;
+            settled = true;
+            cleanup();
+            failCb({ message: 'Request timed out.' });
+        }, timeoutMs || 15000);
+    }
+
+    // ===================================================================================
+    // I18N: translations dictionary. UI text only -- sheet data is never translated here.
+    // ===================================================================================
+    const I18N = {
+        en: {
+            pageTitle: "Theyyam Calendar",
+            subHeading: "Theyyam and Thira are sacred rituals. Please strictly follow the instructions given by the Kavu/Tharavadu/Devasthanam authorities. Photos/videos only from a respectful distance.",
+            warningBox: "This calendar is prepared based on notices/announcements received last year. Dates may change according to the Malayalam month. Click on a date to see that day's Theyyams along with notices \u2014 confirmed events are shown in green.",
+            statusHeader: "Theyyam Festivals",
+            dateLimit: "(Next 30 days from today)",
+            loadingData: "Loading data...",
+            liveUpdateHeading: "Special Announcements ...",
+            statusMessageLoading: "Loading data... please wait.",
+            prevMonth: "\u2190 Previous Month",
+            dayNames: ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],
+            modalDateDefault: "Today's Theyyam Festivals",
+            eventDetailsPlaceholder: "Click on a date to see details here.",
+            searchBoxHeading: "Search here (Kavu, Place, Theyyam):",
+            searchPlaceholder: "Kavu, Theyyam, Place",
+            searchTitle: "Name of Kavu, Tharavadu, Theyyam or Place.",
+            featuredTheyyams: "Featured Theyyams",
+            footerMessage1: "Theyyam Calendar has been serving North Malabar since 2014 (a Theyyam Calendar by the Chayilyam WhatsApp group).",
+            footerMessage2: "Powered by Theyyam-Thira WhatsApp group since 2014",
+            lastUpdatedLabel: "Last updated: ",
+            eventsWord: "festivals",
+            noAnnouncements: "No special announcements.",
+            noScrollAnnouncements: "No scroll announcements available.",
+            announcementPrefix: "\ud83d\udce3 Announcement:",
+            modalDatePrefix: "Theyyam Festivals on ",
+            modalDateSuffix: "",
+            noEventsOnDate: "No Theyyam festivals available on this date.",
+            confirmedHeader: "\u2705 Confirmed Theyyam Festivals",
+            pendingHeader: "\u23f3 Unconfirmed / Under Verification",
+            statusConfirmed: "Confirmed",
+            statusPending: "Under Verification",
+            statusPast: "Past",
+            singleDay: "Single day festival",
+            endingDay: (i,n) => `Festival ending day (Day ${i}/${n})`,
+            startingDay: (i,n) => `Festival starting day (Day ${i}/${n})`,
+            middleDay: (i,n) => `Festival day ${i} (Day ${i}/${n})`,
+            ongoing: (i,n) => `Festival ongoing (Day ${i}/${n})`,
+            dateRangeJoin: (a,b) => `${a} to ${b}`,
+            placeNotAvailable: "Place name not available",
+            districtNotAvailable: "District not available",
+            today: "Today:",
+            date: "Date:",
+            notAvailable: "Not available",
+            malayalamDate: "Date (Malayalam Calendar):",
+            place: "Place:",
+            theyyam: "Theyyam:",
+            contact: "Contact:",
+            shareButton: "Share",
+            shareCopied: "Copied to clipboard!",
+            status: "Status:",
+            notes: "Notes:",
+            noticeLabel: "Notice / Announcement:",
+            noticeYearNote: "(Please confirm the notice is for this year)",
+            directionsButton: "Directions to the Kavu ... Click here ...",
+            filterModalSuffix: " - Theyyam Festivals",
+            noEventsForFilter: (label) => `No Theyyam festivals currently available for ${label}.`,
+            errorLoadingPrefix: (msg) => `Error loading data: <strong>${msg}</strong>. Please check that your Apps Script deployment is correct and that the mandatory columns (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) exist in the sheet.`,
+            dataUpdated: (d,t) => `Data updated: ${d} @ ${t}`,
+            lastUpdatedUnavailable: "Last updated time not available.",
+            noResultsFound: (term) => `No results found for "<strong>${term}</strong>".`,
+            gasNotFound: "Google Apps Script environment not found.",
+            addToGCalLabel: "Add to Calendar",
+            apkDownloadLabel: "Download App",
+            locale: "en-IN",
+            filterLabels: {
+                kativanur_veeran: "Kativanur Veeran",
+                kandanar_kelan: "Kandanar Kelan",
+                muchilot_bhagavathy: "Muchilot Bhagavathy",
+                perumkaliyattam: "Perumkaliyattam",
+                thalappoli: "Thalappoli",
+                theyyam_kettu: "Theyyam Kettu",
+                thulu_theyyam: "Tulu Theyyam",
+                mookambika_gulikan: "Mookambika Gulikan",
+                panchuruli: "Panchuruli",
+                kozhikode_district_theyyam: "Kozhikode District Theyyam",
+                theekuttichathan: "Theekuttichathan"
+            }
+        },
+        ml: {
+            pageTitle: "\u0d24\u0d46\u0d2f\u0d4d\u0d2f\u0d02 \u0d15\u0d32\u0d23\u0d4d\u0d1f\u0d7c",
+            subHeading: "\u0d24\u0d46\u0d2f്\u0d2f\u0d35\u0d41\u0d02 \u0d24\u0d3f\u0d31\u0d2f\u0d41\u0d02 \u0d05\u0d28\u0d41\u0d37്\u0d20\u0d3e\u0d28\u0d2e\u0d3e\u0d23്. \u0d15\u0d3e\u0d35്/\u0d24\u0d31\u0d35\u0d3e\u0d1f് /\u0d26\u0d47\u0d35\u0d38്\u0d25\u0d3e\u0d28\u0d02/ \u0d05\u0d27\u0d3f\u0d15\u0d3e\u0d30\u0d3f\u0d15്\u0d15\u0d47\u0d7e \u0d28\u0d7d\u0d15\u0d41\u0d28്\u0d28 \u0d28\u0d3f\u0d7c\u0d26്\u0d26\u0d47\u0d36\u0d19്\u0d19\u0d7e \u0d15\u0d7c\u0d36\u0d28\u0d2e\u0d3e\u0d2f\u0d3f \u0d2a\u0d3e\u0d32\u0d3f\u0d15്\u0d15\u0d41\u0d15.\u0d2b\u0d4b\u0d1f്\u0d1f\u0d4b/\u0d35\u0d40\u0d21\u0d3f\u0d2f\u0d4b \u0d05\u0d15\u0d32\u0d02 \u0d2a\u0d3e\u0d32\u0d3f\u0d1a്\u0d1a\u0d41\u0d15\u0d4a\u0d23്\u0d1f് \u0d2e\u0d3e\u0d24്\u0d30\u0d02",
+            warningBox: "\u0d15\u0d34\u0d3f\u0d1e്\u0d1e \u0d35\u0d7c\u0d37\u0d02 \u0d32\u0d2d\u0d3f\u0d1a്\u0d1a \u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് /\u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a് \u0d2a്\u0d30\u0d15\u0d3e\u0d30\u0d02 \u0d24\u0d2f്\u0d2f\u0d31\u0d3e\u0d15്\u0d15\u0d3f\u0d2f\u0d24\u0d3e\u0d23്\u0d1f\u0d47 \u0d15\u0d32\u0d23്\u0d1f\u0d7c .\u0d06\u0d2f\u0d24\u0d41\u0d15\u0d4a\u0d23്\u0d1f് \u0d2e\u0d32\u0d2f\u0d3e\u0d33 \u0d2e\u0d3e\u0d38\u0d02 \u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d15്\u0d15\u0d28\u0d41\u0d38\u0d30\u0d3f\u0d1a് \u0d2e\u0d3e\u0d31്\u0d31\u0d02\u0d09\u0d23്\u0d1f\u0d3e\u0d15\u0d3e\u0d02. \u0d24\u0d40\u0d2f\u0d24\u0d3f \u0d15\u0d4b\u0d33\u0d24്\u0d24\u0d3f\u0d7d \u0d15്\u0d32\u0d3f\u0d15് \u0d1a\u0d46\u0d2f്\u0d24\u0d3e\u0d7d \u0d06 \u0d26\u0d3f\u0d35\u0d38\u0d24്\u0d24\u0d46 \u0d24\u0d46\u0d2f്\u0d2f\u0d19്\u0d19\u0d7e \u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് \u0d09\u0d7e\u0d2a്\u0d2a\u0d46\u0d1f\u0d46 \u0d32\u0d2d്\u0d2f\u0d15്\u0d15\u0d41\u0d02 ,\u0d09\u0d31\u0d2a്\u0d2a\u0d41 \u0d35\u0d30\u0d41\u0d24്\u0d24\u0d3f\u0d2f\u0d35 \u0d2a\u0d1a്\u0d1a\u0d28\u0d3f\u0d31\u0d24്\u0d24\u0d3f\u0d7d \u0d15\u0d3e\u0d23\u0d3e\u0d02",
+            statusHeader: "\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            dateLimit: "(\u0d07\u0d28്\u0d28\u0d41\u0d2e\u0d41\u0d24\u0d7d 30 \u0d26\u0d3f\u0d35\u0d38\u0d02)",
+            loadingData: "\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21് \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d41...",
+            liveUpdateHeading: "\u0d2a്\u0d30\u0d24്\u0d2f\u0d47\u0d15 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d7e ...",
+            statusMessageLoading: "\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21് \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d41... \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f \u0d15\u0d3e\u0d24്\u0d24\u0d3f\u0d30\u0d3f\u0d15്\u0d15\u0d41\u0d15.",
+            prevMonth: "\u2190 \u0d15\u0d34\u0d3f\u0d1e്\u0d1e \u0d2e\u0d3e\u0d38\u0d02",
+            dayNames: ["\u0d1e\u0d3e","\u0d24\u0d3f","\u0d1a\u0d4a","\u0d2c\u0d41","\u0d35്\u0d2f\u0d3e","\u0d35\u0d46","\u0d36"],
+            modalDateDefault: "\u0d07\u0d28്\u0d28\u0d24്\u0d24\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            eventDetailsPlaceholder: "\u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d15്\u0d32\u0d3f\u0d15്\u0d15് \u0d1a\u0d46\u0d2f്\u0d24\u0d3e\u0d7d \u0d35\u0d3f\u0d35\u0d30\u0d19്\u0d19\u0d7e \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15\u0d3e\u0d23\u0d3e\u0d02.",
+            searchBoxHeading: "\u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d24\u0d3f\u0d30\u0d2f\u0d42 (\u0d15\u0d3e\u0d35്, \u0d38്\u0d25\u0d32\u0d02, \u0d24\u0d46\u0d2f്\u0d2f\u0d02):",
+            searchPlaceholder: "\u0d15\u0d3e\u0d35്,\u0d24\u0d46\u0d2f്\u0d2f\u0d02,\u0d38്\u0d25\u0d32\u0d02",
+            searchTitle: "\u0d15\u0d3e\u0d35്, \u0d24\u0d31\u0d35\u0d3e\u0d1f്,\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d38്\u0d25\u0d32\u0d24്\u0d24\u0d3f\u0d28്\u0d31\u0d46 \u0d2a\u0d47\u0d30്.",
+            featuredTheyyams: "\u0d2a്\u0d30\u0d27\u0d3e\u0d28 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
+            footerMessage1: "2014 \u0d2e\u0d41\u0d24\u0d7d \u0d09\u0d24്\u0d24\u0d30\u0d2e\u0d32\u0d2c\u0d3e\u0d31\u0d3f\u0d7d \u0d2a്\u0d30\u0d35\u0d7c\u0d24്\u0d24\u0d3f\u0d15്\u0d15\u0d41\u0d28്\u0d28 \u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d32\u0d23്\u0d1f\u0d7c (\u0d1a\u0d3e\u0d2f\u0d3f\u0d32്\u0d2f\u0d02 \u0d35\u0d3e\u0d1f്\u0d38്\u0d06\u0d2a് \u0d17്\u0d30\u0d42\u0d2a്\u0d2a\u0d3f\u0d28്\u0d31\u0d46 \u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d32\u0d23്\u0d1f\u0d7c \u0d06\u0d23\u0d3f\u0d24്).",
+            footerMessage2: "2014 \u0d2e\u0d41\u0d24\u0d7d \u0d24\u0d46\u0d2f്\u0d2f\u0d02-\u0d24\u0d3f\u0d31 \u0d35\u0d3e\u0d1f്\u0d38്\u0d06\u0d2a്\u0d2a് \u0d17്\u0d30\u0d42\u0d2a്\u0d2a\u0d3f\u0d28്\u0d31\u0d46 \u0d2a\u0d3f\u0d28്\u0d24\u0d41\u0d23\u0d2f\u0d4b\u0d1f\u0d46",
+            lastUpdatedLabel: "\u0d05\u0d35\u0d38\u0d3e\u0d28\u0d02 \u0d24\u0d3f\u0d30\u0d41\u0d24്\u0d24\u0d3f\u0d2f\u0d24്: ",
+            eventsWord: "\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noAnnouncements: "\u0d2a്\u0d30\u0d24്\u0d2f\u0d47\u0d15 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d33\u0d4a\u0d28്\u0d28\u0d41\u0d02 \u0d07\u0d32്\u0d32.",
+            noScrollAnnouncements: "\u0d38്\u0d15്\u0d30\u0d4b\u0d7e \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d7e \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            announcementPrefix: "\ud83d\udce3 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a്:",
+            modalDatePrefix: "",
+            modalDateSuffix: "-\u0d32\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noEventsOnDate: "\u0d08 \u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d33\u0d4a\u0d28്\u0d28\u0d41\u0d02 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            confirmedHeader: "\u2705 \u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a്\u0d1a \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            pendingHeader: "\u23f3 \u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d15്\u0d15\u0d3e\u0d24്\u0d24\u0d35 / \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d28\u0d2f\u0d3f\u0d7d",
+            statusConfirmed: "\u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a്\u0d1a\u0d24്",
+            statusPending: "\u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d28\u0d2f\u0d3f\u0d7d",
+            statusPast: "\u0d15\u0d34\u0d3f\u0d1e്\u0d1e\u0d41",
+            singleDay: "\u0d12\u0d31്\u0d31 \u0d26\u0d3f\u0d35\u0d38\u0d24്\u0d24\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02",
+            endingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d24\u0d40\u0d30\u0d41\u0d28്\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            startingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d24\u0d41\u0d1f\u0d19്\u0d19\u0d41\u0d28്\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            middleDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 ${i}-\u0d3e\u0d2e\u0d24്\u0d24\u0d46 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            ongoing: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d28\u0d1f\u0d15്\u0d15\u0d41\u0d28്\u0d28\u0d41 (Day ${i}/${n})`,
+            dateRangeJoin: (a,b) => `${a} \u0d2e\u0d41\u0d24\u0d7d ${b} \u0d35\u0d30\u0d46`,
+            placeNotAvailable: "\u0d38്\u0d25\u0d32\u0d2a്\u0d2a\u0d47\u0d30് \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            districtNotAvailable: "\u0d1c\u0d3f\u0d32്\u0d32 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            today: "\u0d07\u0d28്\u0d28്:",
+            date: "\u0d24\u0d40\u0d2f\u0d24\u0d3f:",
+            notAvailable: "\u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            malayalamDate: "\u0d24\u0d3f\u0d2f്\u0d2f\u0d24\u0d3f (\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02):",
+            place: "\u0d38്\u0d25\u0d32\u0d02:",
+            theyyam: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02:",
+            contact: "\u0d2c\u0d28്\u0d27\u0d2a്\u0d2a\u0d46\u0d1f\u0d47\u0d23്\u0d1f \u0d28\u0d2e്\u0d2c\u0d7c:",
+            shareButton: "\u0d37\u0d47\u0d7c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d15",
+            shareCopied: "\u0d15്\u0d32\u0d3f\u0d2a്\u0d2c\u0d4b\u0d7c\u0d21\u0d3f\u0d32\u0d47\u0d15്\u0d15് \u0d2a\u0d15\u0d7c\u0d24്\u0d24്\u0d3f!",
+            status: "\u0d28\u0d3f\u0d32:",
+            notes: "\u0d15\u0d41\u0d31\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d7e:",
+            noticeLabel: "\u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് / \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a്:",
+            noticeYearNote: "(\u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് \u0d08 \u0d35\u0d7c\u0d37\u0d24്\u0d24\u0d47\u0d24് \u0d24\u0d28്\u0d28\u0d46 \u0d06\u0d23\u0d46\u0d28്\u0d28് \u0d09\u0d31\u0d2a്\u0d2a് \u0d35\u0d30\u0d41\u0d24്\u0d24\u0d41\u0d2e\u0d32്\u0d32\u0d4b)",
+            directionsButton: "\u0d15\u0d3e\u0d35\u0d3f\u0d32\u0d47\u0d15്\u0d15\u0d41\u0d33്\u0d33 \u0d35\u0d34\u0d3f ... \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15്\u0d32\u0d3f\u0d15് \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d15 ...",
+            filterModalSuffix: " - \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noEventsForFilter: (label) => `\u0d28\u0d3f\u0d32\u0d35\u0d3f\u0d7d ${label} \u0d07\u0d28\u0d24്\u0d24\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.`,
+            errorLoadingPrefix: (msg) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21്\u200c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d24\u0d3f\u0d7d \u0d2a\u0d3f\u0d36\u0d15് \u0d38\u0d02\u0d2d\u0d35\u0d3f\u0d1a്\u0d1a\u0d41: <strong>${msg}</strong>. \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f Apps Script Deployment \u0d36\u0d30\u0d3f\u0d2f\u0d3e\u0d23\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02, \u0d37\u0d40\u0d31്\u0d31\u0d3f\u0d32\u0d46 \u0d28\u0d3f\u0d7c\u0d2c\u0d28്\u0d27\u0d3f\u0d24 \u0d15\u0d4b\u0d33\u0d19്\u0d19\u0d7e (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02 \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d3f\u0d15്\u0d15\u0d41\u0d15.`,
+            dataUpdated: (d,t) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24\u0d24്: ${d} @ ${t}`,
+            lastUpdatedUnavailable: "\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24 \u0d38\u0d2e\u0d2f\u0d02 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            noResultsFound: (term) => `"<strong>${term}</strong>" - \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a് \u0d32\u0d2d\u0d3f\u0d1a്\u0d1a\u0d3f\u0d32്\u0d32.`,
+            gasNotFound: "Google Apps Script environment \u0d15\u0d23്\u0d1f\u0d46\u0d24്\u0d24\u0d3f\u0d2f\u0d3f\u0d32്\u0d32.",
+            addToGCalLabel: "\u0d15\u0d32\u0d23്\u0d1f\u0d31\u0d3f\u0d7d \u0d1a\u0d47\u0d7c\u0d15്\u0d15\u0d41\u0d15",
+            apkDownloadLabel: "\u0d06\u0d2a്\u0d2a് \u0d21\u0d57\u0d7a\u0d32\u0d4b\u0d21്",
+            locale: "ml-IN",
+            filterLabels: {
+                kativanur_veeran: "\u0d15\u0d24\u0d3f\u0d35\u0d28്\u0d28\u0d42\u0d7c \u0d35\u0d40\u0d30\u0d7b",
+                kandanar_kelan: "\u0d15\u0d23്\u0d1f\u0d28\u0d3e\u0d7c \u0d15\u0d47\u0d33\u0d7b",
+                muchilot_bhagavathy: "\u0d2e\u0d41\u0d1a്\u0d1a\u0d3f\u0d32\u0d4b\u0d1f്\u0d1f് \u0d2d\u0d17\u0d35\u0d24\u0d3f",
+                perumkaliyattam: "\u0d2a\u0d46\u0d30\u0d41\u0d19്\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02",
+                thalappoli: "\u0d24\u0d3e\u0d32\u0d2a്\u0d2a\u0d4a\u0d32\u0d3f",
+                theyyam_kettu: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d46\u0d1f്\u0d1f്",
+                thulu_theyyam: "\u0d24\u0d41\u0d33\u0d41 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
+                mookambika_gulikan: "\u0d2e\u0d42\u0d15\u0d3e\u0d02\u0d2c\u0d3f\u0d15 \u0d17\u0d41\u0d33\u0d3f\u0d15\u0d7b",
+                panchuruli: "\u0d2a\u0d1e്\u0d1a\u0d41\u0d30\u0d41\u0d33\u0d3f",
+                kozhikode_district_theyyam: "\u0d15\u0d4b\u0d34\u0d3f\u0d15്\u0d15\u0d4b\u0d1f് \u0d1c\u0d3f\u0d32്\u0d32 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
+                theekuttichathan: "\u0d24\u0d40\u0d15\u0d41\u0d1f്\u0d1f\u0d3f\u0d1a\u0d3e\u0d24്\u0d24\u0d7b"
+            }
+        }
+    };
+
+    let currentLang = localStorage.getItem('theyyam_lang') || 'en';
+
+    const BANNER_IMAGES = {
+        en: "https://raw.githubusercontent.com/theyyamwiki/setting/main/ENG%20TITLE.png",
+        ml: "https://raw.githubusercontent.com/theyyamwiki/setting/main/MAL%20TITLE.png"
+    };
+    const t = (key) => I18N[currentLang][key];
+
+    const L = (event, field) => {
+        if (!event) return '';
+        if (currentLang === 'en') {
+            const enValue = event[field + '_e'];
+            if (enValue && String(enValue).trim() !== '') return enValue;
+        }
+        return event[field] || '';
+    };
+
+    const WIKI_BASE = "https://theyyamwiki.miraheze.org";
+    const WIKI_API = WIKI_BASE + "/w/api.php";
+    const KAVU_PRELOAD_TEMPLATE = "Template:Kaavu_Preload_new";
+
+    async function checkKavuWikiPageExists(title) {
+        try {
+            const url = WIKI_API + "?action=query&titles=" + encodeURIComponent(title) +
+                "&format=json&origin=*";
+            const res = await fetch(url);
+            const json = await res.json();
+            const pages = json.query && json.query.pages;
+            if (!pages) return false;
+            for (const pageId in pages) {
+                if (pageId !== "-1" && !pages[pageId].missing) return true;
+            }
+            return false;
+        } catch (err) {
+            console.error("Wiki page-exists check failed:", err);
+            return false;
+        }
+    }
+
+    function buildKavuPreloadUrl(fields) {
+        const params = [
+            fields.name || "", fields.address || "", fields.mapLink || "",
+            fields.photo || "", fields.description || "", fields.festivalDate || "",
+            fields.notice || "", fields.theyyams || "", fields.galleryLink || "",
+            fields.youtubeLink || ""
+        ];
+        let url = WIKI_BASE + "/wiki/" + encodeURIComponent((fields.name || "").replace(/ /g, "_")) +
+            "?action=edit&preload=" + encodeURIComponent(KAVU_PRELOAD_TEMPLATE);
+        params.forEach(function (p) {
+            url += "&preloadparams%5B%5D=" + encodeURIComponent(p);
+        });
+        return url;
+    }
+
+    async function openKavuWikiPage(rowIndex) {
+        const event = ALL_EVENTS.find(e => e.rowIndex === rowIndex);
+        if (!event) return;
+        const kavuName = (L(event, 'kavu_name') || '').trim();
+        if (!kavuName) return;
+
+        const pageExists = await checkKavuWikiPageExists(kavuName);
+
+        if (pageExists) {
+            window.open(WIKI_BASE + "/wiki/" + encodeURIComponent(kavuName.replace(/ /g, "_")), '_blank');
+            return;
+        }
+
+        const district = L(event, 'district') || '';
+        const place = L(event, 'place') || '';
+        const address = place + (district ? ', ' + district : '');
+        const startDate = event.start_date ? event.start_date.split('T')[0] : '';
+        const endDate = event.end_date ? event.end_date.split('T')[0] : '';
+        const festivalDate = startDate + (endDate && endDate !== startDate ? ' - ' + endDate : '');
+
+        const preloadUrl = buildKavuPreloadUrl({
+            name: kavuName,
+            address: address,
+            mapLink: event.googlemap_link || '',
+            photo: '',
+            description: L(event, 'description') || '',
+            festivalDate: festivalDate,
+            notice: event.notice || event.remarks || '',
+            theyyams: L(event, 'theyyam_list') || '',
+            galleryLink: '',
+            youtubeLink: ''
+        });
+
+        window.open(preloadUrl, '_blank');
+    }
+
+    // ⚠️ WhatsApp ഷെയറിൽ ചേർക്കുന്ന സൈറ്റ് ലിങ്ക്
+    const SITE_LINK = 'https://www.theyyamcalendar.in';
+
+    let ALL_EVENTS = [];
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+    const TODAY = new Date();
+    TODAY.setHours(0, 0, 0, 0);
+    const TODAY_TIME = TODAY.getTime();
+    const MAX_DAYS_AHEAD = 60;
+
+    let lastShownEvents = [];
+    let lastShownDate = TODAY;
+    let lastUpdatedISOGlobal = null;
+    let lastFilterKey = null;
+
+    const calendarGrid = document.getElementById('calendarGrid');
+    const currentMonthYearDisplay = document.getElementById('currentMonthYear');
+    const statusMessage = document.getElementById('statusMessage');
+    const calendarArea = document.getElementById('calendarArea');
+    const modalDate = document.getElementById('modalDate');
+    const eventDetails = document.getElementById('eventDetails');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const scrollTickerContent = document.getElementById('scrollTickerContent');
+    const lastUpdatedDateSpan = document.getElementById('lastUpdatedDate');
+    const eventSearch = document.getElementById('eventSearch');
+    const searchResults = document.getElementById('searchResults');
+    const filterModal = document.getElementById('filterModal');
+    const filterModalClose = document.getElementById('filterModalClose');
+    const filterModalTitle = document.getElementById('filterModalTitle');
+    const filterEventList = document.getElementById('filterEventList');
+    const liveUpdateContent = document.getElementById('liveUpdateContent');
+    const theyyamFilterButtons = document.getElementById('theyyamFilterButtons');
+    const langBtnEn = document.getElementById('langBtnEn');
+    const langBtnMl = document.getElementById('langBtnMl');
+    const addToGCalBtn = document.getElementById('addToGCalBtn');
+    const apkDownloadBtn = document.getElementById('apkDownloadBtn');
+    const visitCountValue = document.getElementById('visitCountValue');
+
+    const FULL_LIST_FILTERS = [
+        { key: 'kativanur_veeran', color: '#FF5722' },
+        { key: 'kandanar_kelan', color: '#4CAF50' },
+        { key: 'muchilot_bhagavathy', color: '#9C27B0' },
+        { key: 'perumkaliyattam', color: '#03A9F4' },
+        { key: 'thalappoli', color: '#C62828' },
+        { key: 'theyyam_kettu', color: '#000000' },
+        { key: 'thulu_theyyam', color: '#673AB7' },
+        { key: 'mookambika_gulikan', color: '#FFB300' },
+        { key: 'panchuruli', color: '#795548' },
+        { key: 'kozhikode_district_theyyam', color: '#009688' },
+        { key: 'theekuttichathan', color: '#6A1B9A' },
+    ];
+
+    const toYYYYMMDD = (date) => date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+    const isYes = (val) => String(val || '').trim().toLowerCase() === 'yes';
+    const isPinnedFlagRow = (row) => isYes(row.neeliyar_kottam) || isYes(row.parassini_madappura);
+    const toLocaleDateString = (date) => date.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long', year: 'numeric' });
+    const addDays = (date, days) => {
+        const result = new Date(date);
+        result.setDate(result.getDate() + days);
+        result.setHours(0, 0, 0, 0);
+        return result;
+    };
+
+    const parseDate = (dateStr) => {
+        if (!dateStr) return null;
+        if (dateStr.endsWith('Z')) {
+            const date = new Date(dateStr);
+            date.setHours(0, 0, 0, 0);
+            return date;
+        }
+        const dateParts = dateStr.split('-');
+        if (dateParts.length !== 3) return null;
+        const year = parseInt(dateParts[0], 10);
+        const month = parseInt(dateParts[1], 10) - 1;
+        const day = parseInt(dateParts[2], 10);
+        const date = new Date(year, month, day);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    };
+
+    const getEventDayType = (event, checkDateObj) => {
+        const startTimestamp = event.startDateObj ? event.startDateObj.getTime() : 0;
+        const endTimestamp = event.endDateObj ? event.endDateObj.getTime() : 0;
+        const checkTimestamp = checkDateObj.getTime();
+        if (startTimestamp === endTimestamp) return 3;
+        if (checkTimestamp === endTimestamp) return 0;
+        if (checkTimestamp === startTimestamp) return 2;
+        if (checkTimestamp > startTimestamp && checkTimestamp < endTimestamp) return 1;
+        return 99;
+    };
+
+    function updateLastUpdated(isoDateString) {
+        lastUpdatedISOGlobal = isoDateString;
+        if (isoDateString && lastUpdatedDateSpan) {
+            try {
+                const date = new Date(isoDateString);
+                const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true };
+                const timeStr = date.toLocaleTimeString(t('locale'), timeOptions);
+                const dateStr = date.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long' });
+                lastUpdatedDateSpan.textContent = t('dataUpdated')(dateStr, timeStr);
+            } catch (error) {
+                console.error("Error parsing lastUpdated date:", error);
+                lastUpdatedDateSpan.textContent = t('lastUpdatedUnavailable');
+            }
+        }
+    }
+
+    function handleSuccess(allRows) {
+        try {
+            let lastUpdatedISO = null;
+            if (allRows.length > 0 && allRows[allRows.length - 1].lastUpdated) {
+                lastUpdatedISO = allRows.pop().lastUpdated;
+            }
+            if (!Array.isArray(allRows)) {
+                throw new Error("Apps Script response is not an array of events or the data is empty.");
+            }
+            const mandatoryHeaders = ['kavu_name', 'start_date', 'end_date', 'theyyam_list'];
+            ALL_EVENTS = allRows.filter(row =>
+                isPinnedFlagRow(row)
+                    ? String(row.kavu_name || '').trim() !== ''
+                    : mandatoryHeaders.every(h => String(row[h] || '').trim() !== '')
+            );
+            ALL_EVENTS.forEach((event, index) => {
+                const confirmationValue = String(event.status || '').trim().toLowerCase();
+                if (confirmationValue === 'yes' || confirmationValue === 'y' || confirmationValue === 'confirmed' || confirmationValue === 'true') {
+                    event['Confirm Status'] = 'Confirmed';
+                } else {
+                    event['Confirm Status'] = 'Pending';
+                }
+                event.rowIndex = index + 2;
+                event.startDateObj = parseDate(event.start_date);
+                event.endDateObj = parseDate(event.end_date);
+            });
+            ALL_EVENTS = ALL_EVENTS.filter(e => isPinnedFlagRow(e) || e['Confirm Status'] === 'Confirmed');
+            const MAX_DATE = addDays(TODAY, MAX_DAYS_AHEAD);
+            ALL_EVENTS = ALL_EVENTS.filter(e => {
+                if (isPinnedFlagRow(e) && (!e.startDateObj || !e.endDateObj)) return true;
+                return e.startDateObj && !isNaN(e.startDateObj.getTime()) &&
+                    e.endDateObj && !isNaN(e.endDateObj.getTime()) &&
+                    e.startDateObj <= MAX_DATE;
+            });
+            ALL_EVENTS.sort((a, b) => (a.startDateObj || 0) - (b.startDateObj || 0));
+
+            statusMessage.style.display = 'none';
+            calendarArea.style.display = 'block';
+
+            renderCalendar();
+            const defaultEvents = getEventsForDate(TODAY);
+            showDetailsModal(defaultEvents, TODAY);
+            updateScrollTicker();
+            updateLastUpdated(lastUpdatedISO);
+            renderSpecialFilters();
+            renderThirumuttamUpdates();
+        } catch (error) {
+            console.error("Error processing data:", error);
+            handleFailure(error);
+        }
+    }
+
+    function handleFailure(error) {
+        console.error("Error fetching data:", error);
+        statusMessage.innerHTML = `<i class="fas fa-exclamation-triangle" style="color:#c62828;"></i> ` + t('errorLoadingPrefix')(error.message || 'Apps Script execution failed');
+    }
+
+    // 🆕 google.script.run.getFullData() -ന് പകരം, JSONP വഴി Apps Script-ന്റെ
+    // ?action=data എൻഡ്‌പോയിന്റ് വിളിക്കുന്നു — ഏത് ഡൊമെയ്നിൽ നിന്നും വർക്ക് ചെയ്യും.
+    function fetchSheetData() {
+        jsonpRequest(APPS_SCRIPT_BASE_URL + '?action=data', handleSuccess, handleFailure);
+    }
+
+    // ===== Visit counter (Apps Script + Sheet controlled) =====
+    function fetchVisitCount() {
+        jsonpRequest(
+            APPS_SCRIPT_BASE_URL + '?action=visitcount',
+            (count) => {
+                visitCountValue.textContent = (count !== null && count !== undefined)
+                    ? Number(count).toLocaleString(t('locale'))
+                    : '-';
+            },
+            () => { visitCountValue.textContent = '-'; }
+        );
+    }
+
+    function renderThirumuttamUpdates() {
+        liveUpdateContent.innerHTML = '';
+        const thirumuttamEvents = ALL_EVENTS.filter(event => L(event, 'thirumuttam') && String(L(event, 'thirumuttam')).trim() !== '');
+        thirumuttamEvents.sort((a, b) => b.rowIndex - a.rowIndex);
+        const eventsToDisplay = thirumuttamEvents.slice(0, 10);
+        if (eventsToDisplay.length === 0) {
+            liveUpdateContent.innerHTML = `<p class="status-message" style="padding:10px 0;">${t('noAnnouncements')}</p>`;
+            return;
+        }
+        eventsToDisplay.forEach(event => {
+            const highlightColor = '#F57F17';
+            const card = document.createElement('div');
+            card.className = 'event-details-box thirumuttam-short-event';
+            card.style.borderLeft = `5px solid ${highlightColor}`;
+            card.style.backgroundColor = `${highlightColor}10`;
+            card.style.boxShadow = `0 1px 3px ${highlightColor}40`;
+            card.innerHTML = `<div class="thirumuttam-content">${L(event, 'thirumuttam')}</div>`;
+            liveUpdateContent.appendChild(card);
+        });
+    }
+
+    function updateScrollTicker() {
+        scrollTickerContent.innerHTML = '';
+        const scrollEvents = ALL_EVENTS.filter(event => L(event, 'scroll_box') && String(L(event, 'scroll_box')).trim() !== '');
+        scrollEvents.sort((a, b) => b.rowIndex - a.rowIndex);
+        const latestThreeEvents = scrollEvents.slice(0, 3);
+        if (latestThreeEvents.length === 0) {
+            scrollTickerContent.innerHTML = `<div style="padding:10px;text-align:center;color:white;">${t('noScrollAnnouncements')}</div>`;
+            return;
+        }
+        latestThreeEvents.forEach(event => {
+            const card = document.createElement('div');
+            card.className = 'thirumuttam-short-event scroll-ticker-card';
+            card.style.display = 'inline-block';
+            card.style.marginRight = '20px';
+            card.style.backgroundColor = 'transparent';
+            card.style.border = 'none';
+            card.style.boxShadow = 'none';
+            card.style.color = 'white';
+            card.innerHTML = `<span style="font-weight:bold;">${t('announcementPrefix')}</span> ${L(event, 'scroll_box')}`;
+            scrollTickerContent.appendChild(card);
+        });
+    }
+
+    const getEventsForDate = (date) => {
+        const checkDate = new Date(toYYYYMMDD(date));
+        checkDate.setHours(0, 0, 0, 0);
+        return ALL_EVENTS.filter(event => {
+            const eventStart = event.startDateObj;
+            const eventEnd = event.endDateObj;
+            return eventStart && eventEnd && checkDate >= eventStart && checkDate <= eventEnd;
+        }).sort((a, b) => a.startDateObj - b.startDateObj);
+    };
+
+    function renderCalendar() {
+        const date = new Date(currentYear, currentMonth, 1);
+        const firstDayOfMonth = date.getDay();
+        const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+        const currentMonthName = date.toLocaleDateString(t('locale'), { month: 'long', year: 'numeric' });
+        currentMonthYearDisplay.textContent = currentMonthName;
+        calendarGrid.innerHTML = '';
+
+        const nextMonthDate = new Date(currentYear, currentMonth + 1, 1);
+        nextMonthBtn.textContent = `${nextMonthDate.toLocaleDateString(t('locale'), { month: 'long' })} \u2192`;
+
+        for (let i = 0; i < firstDayOfMonth; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'day-cell';
+            calendarGrid.appendChild(emptyCell);
+        }
+
+        for (let day = 1; day <= daysInMonth; day++) {
+            const dayDate = new Date(currentYear, currentMonth, day);
+            dayDate.setHours(0, 0, 0, 0);
+            const dayCell = document.createElement('div');
+            dayCell.className = 'day-cell';
+            const events = getEventsForDate(dayDate);
+            let eventsCount = events.length;
+            dayCell.innerHTML = `
+                <div class="day-content">
+                    <span class="day-number">${day}</span>
+                </div>
+            `;
+            if (eventsCount > 0) {
+                dayCell.style.backgroundColor = '#e8f5e9';
+            }
+            dayCell.onclick = () => showDetailsModal(events, dayDate);
+            if (toYYYYMMDD(dayDate) === toYYYYMMDD(TODAY)) {
+                dayCell.classList.add('today');
+            }
+            calendarGrid.appendChild(dayCell);
+        }
+    }
+
+    function changeMonth(direction) {
+        currentMonth += direction;
+        if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+        else if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+        renderCalendar();
+    }
+
+    function showDetailsModal(events, dateObj) {
+        lastShownEvents = events;
+        lastShownDate = dateObj;
+        modalDate.textContent = t('modalDatePrefix') + toLocaleDateString(dateObj) + t('modalDateSuffix');
+        eventDetails.innerHTML = '';
+
+        const parassiniEvent = ALL_EVENTS.find(e => isYes(e.parassini_madappura));
+
+        const neeliyarEvent = events.find(e => isYes(e.neeliyar_kottam)) ||
+            ALL_EVENTS.find(e => isYes(e.neeliyar_kottam) && (!e.startDateObj || !e.endDateObj));
+
+        const normalEvents = events.filter(e => e !== neeliyarEvent && e !== parassiniEvent);
+
+        if (normalEvents.length === 0 && !neeliyarEvent && !parassiniEvent) {
+            eventDetails.innerHTML = `<p class="status-message" style="color: #444; padding: 20px; text-align: center;">${t('noEventsOnDate')}</p>`;
+            return;
+        }
+
+        if (neeliyarEvent || parassiniEvent) {
+            const pinnedRow = document.createElement('div');
+            pinnedRow.className = 'pinned-boxes-row';
+            if (neeliyarEvent) {
+                pinnedRow.appendChild(renderPinnedEventCard(neeliyarEvent, { accent: '#2E7D32', bg: '#E8F5E9' }));
+            }
+            if (parassiniEvent) {
+                pinnedRow.appendChild(renderPinnedEventCard(parassiniEvent, { accent: '#C62828', bg: '#FFEBEE' }));
+            }
+            eventDetails.appendChild(pinnedRow);
+        }
+
+        if (normalEvents.length === 0) return;
+
+        normalEvents.sort((a, b) => {
+            const dayTypeA = getEventDayType(a, dateObj);
+            const dayTypeB = getEventDayType(b, dateObj);
+            return dayTypeA - dayTypeB;
+        });
+
+        normalEvents.forEach(event => eventDetails.appendChild(renderEventDetailCard(event, 'Normal', dateObj)));
+    }
+
+    function createSectionHeader(title, color) {
+        const header = document.createElement('h3');
+        header.textContent = title;
+        header.style.cssText = `
+            margin-top: 15px; padding: 8px 10px; background-color: ${color}1A;
+            color: ${color}; border-left: 5px solid ${color}; font-size: 1.1em;
+        `;
+        return header;
+    }
+
+    function renderPinnedEventCard(event, colorScheme) {
+    const detailDiv = document.createElement('div');
+    detailDiv.className = 'event-details-box';
+    detailDiv.style.border = `2px solid ${colorScheme.accent}`;
+    detailDiv.style.backgroundColor = colorScheme.bg;
+    detailDiv.style.marginBottom = '0';
+    detailDiv.style.flex = '1';
+    detailDiv.style.minWidth = '0';
+
+    const localizedKavuName = L(event, 'kavu_name');
+    const localizedDistrict = L(event, 'district');
+    const localizedPlace = L(event, 'place');
+    const localizedTheyyamList = L(event, 'theyyam_list');
+    const localizedDescription = L(event, 'description');
+
+    const kavuClickAttr = `openKavuWikiPage(${event.rowIndex})`;
+
+    let theyyamPills = '';
+    if (localizedTheyyamList) {
+        localizedTheyyamList.split(/,\s*|\s*\/\s*/).forEach(tItem => {
+            const clean = tItem.trim();
+            if (clean) {
+                theyyamPills += `<a href="javascript:void(0)" onclick="${kavuClickAttr}" class="day-status-pill" style="text-decoration:none; background-color:${colorScheme.accent};">${clean}</a>`;
+            }
+        });
+    }
+           detailDiv.innerHTML = `
+            <h4 style="margin:0 0 4px 0;">
+                <a href="javascript:void(0)" onclick="${kavuClickAttr}" style="color:${colorScheme.accent}; text-decoration:none; font-weight:bold;">
+                    ${localizedKavuName || t('placeNotAvailable')}
+                </a>
+            </h4>
+            <p style="margin:2px 0 8px 0; color:#555; font-size:0.9em;">
+                ${localizedPlace || t('notAvailable')}
+                <span style="color:#888;">(${localizedDistrict || t('districtNotAvailable')})</span>
+            </p>
+            ${theyyamPills ? `<p style="margin:8px 0; display:flex; align-items:center; flex-wrap:wrap; gap:6px;"><span style="font-weight:bold; margin-right:6px; font-size:0.9em; color:${colorScheme.accent};">${t('theyyam')}</span> ${theyyamPills}</p>` : ''}
+            ${localizedDescription && String(localizedDescription).trim() !== '' ? `
+                <div class="remarks-scroll-box"><strong>${t('notes')}</strong> ${localizedDescription}</div>
+            ` : ''}
+        `;
+        return detailDiv;
+    }
+
+    function renderEventDetailCard(event, statusType, checkDateObj) {
+        const detailDiv = document.createElement('div');
+        const statusClassSummary = event['Confirm Status'] === 'Confirmed' ? 'status-confirmed' : 'status-past';
+        const statusText = event['Confirm Status'] === 'Confirmed' ? t('statusConfirmed') : t('statusPending');
+        detailDiv.className = `event-details-box ${statusClassSummary}`;
+
+        const daysDifference = (event.endDateObj.getTime() - event.startDateObj.getTime()) / (1000 * 3600 * 24) + 1;
+        const dayIndex = (checkDateObj.getTime() - event.startDateObj.getTime()) / (1000 * 3600 * 24) + 1;
+
+        let dayStatusText;
+        const dayType = getEventDayType(event, checkDateObj);
+        if (daysDifference === 1) {
+            dayStatusText = t('singleDay');
+        } else if (dayType === 0) {
+            dayStatusText = `<span style="color:#C62828; font-weight:bold;">${t('endingDay')(dayIndex, daysDifference)}</span>`;
+        } else if (dayType === 2) {
+            dayStatusText = `<span style="color:#1565C0; font-weight:bold;">${t('startingDay')(dayIndex, daysDifference)}</span>`;
+        } else if (dayType === 1) {
+            dayStatusText = `<span style="color:#2E7D32;">${t('middleDay')(dayIndex, daysDifference)}</span>`;
+        } else {
+            dayStatusText = t('ongoing')(dayIndex, daysDifference);
+        }
+
+        let dateRange = event.startDateObj ? event.startDateObj.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long' }) : '';
+        if (daysDifference > 1) {
+            const endStr = event.endDateObj.toLocaleDateString(t('locale'), { day: 'numeric', month: 'long' });
+            dateRange = t('dateRangeJoin')(dateRange, endStr);
+        }
+        if (event.startDateObj) {
+            dateRange = `${dateRange} ${event.startDateObj.getFullYear()}`;
+        }
+
+        let theyyamPills = '';
+        const localizedTheyyamList = L(event, 'theyyam_list');
+        if (localizedTheyyamList) {
+            localizedTheyyamList.split(/,\s*|\s*\/\s*/).forEach(tItem => {
+                let clean = tItem.trim();
+                if (clean) {
+                    let wikiPage = encodeURIComponent(clean.replace(/ /g, "_"));
+                    let wikiUrl = "https://theyyamwiki.miraheze.org/wiki/" + wikiPage;
+                    theyyamPills += `
+                        <a href="${wikiUrl}" target="_blank" rel="noopener noreferrer" class="day-status-pill" style="text-decoration:none;">
+                            ${clean}
+                        </a>
+                    `;
+                }
+            });
+        }
+
+        let noticeImageHTML = '';
+        const noticeImageSrc = toDirectImageUrl(event.image_url);
+        if (noticeImageSrc) {
+            noticeImageHTML = `
+                <div style="text-align: center; margin-top: 15px; padding-top: 10px; border-top: 1px dotted #ccc;">
+                    <p style="margin-bottom: 8px; font-weight: bold; font-size: 0.9em; color: #333;">${t('noticeLabel')}</p>
+                    <img src="${noticeImageSrc}" alt="Notice" style="width: 100%; height: auto; border: 1px solid #ddd; border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <p style="font-size: 10px; color: #777; margin-top: 5px;">${t('noticeYearNote')}</p>
+                </div>
+            `;
+        }
+
+        let buttonsHTML = '';
+        if (event.googlemap_link && String(event.googlemap_link || '').trim() !== '') {
+            buttonsHTML += `<a href="${event.googlemap_link}" target="_blank" class="status-btn notice-btn" style="background-color:#009688; color:white;"><i class="fas fa-map-marker-alt"></i> ${t('directionsButton')}</a>`;
+        }
+
+        const localizedKavuName = L(event, 'kavu_name');
+        const localizedDistrict = L(event, 'district');
+        const localizedPlace = L(event, 'place');
+        const localizedKollavarsham = L(event, 'kollavarsham');
+        const localizedDescription = L(event, 'description');
+        const kavuClickAttrDetail = `openKavuWikiPage(${event.rowIndex})`;
+
+        detailDiv.innerHTML = `
+            <div style="text-align:center; font-size:0.85em; color:#555; margin-bottom:8px; border-bottom:1px dashed #ddd; padding-bottom:6px;">
+                ${checkDateObj.toLocaleDateString(t('locale'), { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+                ${localizedKollavarsham ? ' &bull; ' + localizedKollavarsham : ''}
+            </div>
+
+            <h4 style="margin:0 0 4px 0;">
+                <a href="javascript:void(0)" onclick="${kavuClickAttrDetail}" style="color:#1b5e20; text-decoration:none; font-weight:bold;">
+                    ${localizedKavuName || t('placeNotAvailable')}
+                </a>
+            </h4>
+            <p style="margin:2px 0 8px 0; color:#555;">
+                ${localizedPlace || t('notAvailable')}
+                <span style="color:#888;">(${localizedDistrict || t('districtNotAvailable')})</span>
+            </p>
+
+            ${event.contact_no && String(event.contact_no).trim() !== '' ? `
+                <p style="margin:5px 0;"><span style="font-weight:bold;">${t('contact')}</span> <a href="tel:${event.contact_no}" style="color:#1565C0; text-decoration:none;">${event.contact_no}</a></p>
+            ` : ''}
+
+            <hr style="border-top: 1px solid #eee; margin: 10px 0;">
+
+            <p style="margin: 5px 0;"><span style="font-weight: bold;">${t('date')}</span> ${dateRange || t('notAvailable')}</p>
+            <p style="margin: 8px 0; font-weight:bold;">${dayStatusText}</p>
+
+            <p style="margin: 10px 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px;">
+                <span style="font-weight: bold; margin-right: 8px;">${t('theyyam')}</span> ${theyyamPills}
+            </p>
+
+            ${localizedDescription && String(localizedDescription).trim() !== '' ? `
+                <div class="remarks-scroll-box"><strong>${t('notes')}</strong> ${localizedDescription}</div>
+            ` : ''}
+
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:15px; padding-top:10px; border-top:1px solid #eee;">
+                <div>${buttonsHTML}</div>
+                <button type="button" class="status-btn share-btn" style="background-color:#25D366; color:white;"
+                    onclick="shareEvent(this)"
+                    data-kavu="${(localizedKavuName || '').replace(/"/g, '&quot;')}"
+                    data-theyyam="${(localizedTheyyamList || '').replace(/"/g, '&quot;')}">
+                    <i class="fab fa-whatsapp"></i> ${t('shareButton')}
+                </button>
+            </div>
+
+            ${noticeImageHTML}
+        `;
+
+        return detailDiv;
+    }
+
+    function toDirectImageUrl(url) {
+        if (!url) return '';
+        const str = String(url).trim();
+        if (!str) return '';
+        let fileId = null;
+        let match = str.match(/\/d\/([a-zA-Z0-9_-]+)/);
+        if (match) fileId = match[1];
+        if (!fileId) {
+            match = str.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+            if (match) fileId = match[1];
+        }
+        if (fileId) {
+            return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1000`;
+        }
+        return str;
+    }
+
+    // ===== WhatsApp share: event name + site link =====
+    function shareEvent(btn) {
+        const kavu = btn.dataset.kavu;
+        const theyyam = btn.dataset.theyyam;
+
+        const shareText = `${theyyam} @ ${kavu}\n${SITE_LINK}`;
+        const waUrl = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+
+        window.open(waUrl, '_blank');
+    }
+
+    function renderSpecialFilters() {
+        theyyamFilterButtons.innerHTML = '';
+        FULL_LIST_FILTERS.forEach(filter => {
+            const button = document.createElement('button');
+            const count = ALL_EVENTS.filter(e => String(e[filter.key] || '').trim().toLowerCase() === 'yes').length;
+            if (count > 0) {
+                const label = t('filterLabels')[filter.key] || filter.key;
+                button.className = 'status-btn';
+                button.textContent = `${label} (${count})`;
+                button.style.backgroundColor = filter.color;
+                button.onclick = () => showFilterModal(filter.key, label);
+                theyyamFilterButtons.appendChild(button);
+            }
+        });
+    }
+
+    function showFilterModal(filterKey, filterLabel) {
+        lastFilterKey = filterKey;
+        filterModalTitle.textContent = `${filterLabel}${t('filterModalSuffix')}`;
+        filterEventList.innerHTML = '';
+
+        const filteredEvents = ALL_EVENTS.filter(event =>
+            String(event[filterKey] || '').trim().toLowerCase() === 'yes'
+        ).sort((a, b) => a.startDateObj - b.startDateObj);
+
+        if (filteredEvents.length > 0) {
+            filteredEvents.forEach(event => {
+                filterEventList.appendChild(renderEventDetailCard(event, 'Normal', event.startDateObj));
+            });
+        } else {
+            filterEventList.innerHTML = `<p class="status-message">${t('noEventsForFilter')(filterLabel)}</p>`;
+        }
+        filterModal.style.display = 'block';
+    }
+
+    filterModalClose.onclick = () => filterModal.style.display = 'none';
+    window.onclick = (event) => { if (event.target === filterModal) filterModal.style.display = 'none'; };
+
+    prevMonthBtn.onclick = () => changeMonth(-1);
+    nextMonthBtn.onclick = () => changeMonth(1);
+
+    // ===== Quick action bar behaviour =====
+    addToGCalBtn.onclick = () => {
+        const icsUrl = APPS_SCRIPT_BASE_URL + '?type=calendar';
+        const calUrl = `https://calendar.google.com/calendar/render?cid=${encodeURIComponent(icsUrl)}`;
+        window.open(calUrl, '_blank');
+    };
+
+    // ⚠️ GitHub-ൽ APK അപ്‌ലോഡ് ചെയ്ത ശേഷം ആ ഡയറക്ട് ഡൗൺലോഡ് ലിങ്ക് ഇവിടെ ചേർക്കുക
+    const APK_DOWNLOAD_URL = '';
+
+    if (APK_DOWNLOAD_URL) {
+        apkDownloadBtn.href = APK_DOWNLOAD_URL;
+    } else {
+        apkDownloadBtn.href = '#';
+        apkDownloadBtn.style.opacity = '0.5';
+        apkDownloadBtn.style.pointerEvents = 'none';
+        apkDownloadBtn.title = 'Coming soon';
+    }
+
+    eventSearch.addEventListener('input', () => {
+        const searchTerm = eventSearch.value.toLowerCase().trim();
+        searchResults.innerHTML = '';
+        searchResults.style.display = 'none';
+        if (searchTerm.length < 2) return;
+        searchResults.style.display = 'block';
+
+        const matchesField = (event, field) =>
+            (event[field] && String(event[field]).toLowerCase().includes(searchTerm)) ||
+            (event[field + '_e'] && String(event[field + '_e']).toLowerCase().includes(searchTerm));
+
+        const filtered = ALL_EVENTS.filter(event =>
+            matchesField(event, 'kavu_name') ||
+            matchesField(event, 'place') ||
+            matchesField(event, 'theyyam_list')
+        ).slice(0, 10);
+
+        filtered.forEach(event => {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'search-result-item';
+            const isPast = event.endDateObj ? event.endDateObj.getTime() < TODAY_TIME : false;
+            let statusText = isPast ? t('statusPast') : (event['Confirm Status'] === 'Confirmed' ? t('statusConfirmed') : t('statusPending'));
+            let statusClass = isPast || event['Confirm Status'] !== 'Confirmed' ? 'status-past' : 'status-confirmed';
+
+            resultItem.innerHTML = `
+                <span class="search-kavu">${L(event, 'kavu_name') || t('placeNotAvailable')}</span>
+                <span class="search-status-line">
+                    <span class="search-location">${event.startDateObj ? toLocaleDateString(event.startDateObj) : t('notAvailable')} | ${L(event, 'place') || ''}</span>
+                    <span class="search-status ${statusClass}">${statusText}</span>
+                </span>
+            `;
+            resultItem.addEventListener('click', () => {
+                showDetailsModal([event], event.startDateObj || TODAY);
+                searchResults.style.display = 'none';
+                eventSearch.value = '';
+            });
+            searchResults.appendChild(resultItem);
+        });
+
+        if (filtered.length === 0) {
+            searchResults.innerHTML = `<div style="padding: 10px; color: #c62828;">${t('noResultsFound')(searchTerm)}</div>`;
+            searchResults.style.display = 'block';
+        }
+    });
+
+    function applyLanguage() {
+        document.getElementById('htmlRoot').lang = currentLang;
+        document.getElementById('pageTitle').textContent = t('pageTitle');
+        document.title = t('pageTitle');
+        document.getElementById('mainBannerImage').src = BANNER_IMAGES[currentLang] || BANNER_IMAGES.en;
+        langBtnEn.classList.toggle('active', currentLang === 'en');
+        langBtnMl.classList.toggle('active', currentLang === 'ml');
+        document.getElementById('subHeadingText').textContent = t('subHeading');
+        document.getElementById('warningBoxText').textContent = t('warningBox');
+        document.getElementById('statusHeaderText').textContent = t('statusHeader');
+        document.getElementById('dateLimitText').textContent = t('dateLimit');
+        document.getElementById('liveUpdateHeadingText').textContent = t('liveUpdateHeading');
+        document.getElementById('statusMessage').textContent = t('statusMessageLoading');
+        document.getElementById('prevMonth').textContent = t('prevMonth');
+        document.getElementById('eventDetailsPlaceholder').textContent = t('eventDetailsPlaceholder');
+        document.getElementById('searchBoxHeading').textContent = t('searchBoxHeading');
+        eventSearch.placeholder = t('searchPlaceholder');
+        eventSearch.title = t('searchTitle');
+        document.getElementById('featuredTheyyamsHeading').textContent = t('featuredTheyyams');
+        document.getElementById('footerMessage1').textContent = t('footerMessage1');
+        document.getElementById('footerMessage2').textContent = t('footerMessage2');
+        document.getElementById('lastUpdatedLabel').textContent = t('lastUpdatedLabel');
+        document.getElementById('addToGCalLabel').textContent = t('addToGCalLabel');
+        document.getElementById('apkDownloadLabel').textContent = t('apkDownloadLabel');
+
+        const dayNamesRow = document.getElementById('dayNamesRow');
+        dayNamesRow.innerHTML = t('dayNames').map(d => `<div>${d}</div>`).join('');
+
+        if (scrollTickerContent.children.length === 0 && ALL_EVENTS.length === 0) {
+            scrollTickerContent.textContent = t('loadingData');
+        }
+
+        if (ALL_EVENTS.length > 0 || calendarArea.style.display === 'block') {
+            renderCalendar();
+            showDetailsModal(lastShownEvents, lastShownDate);
+            updateScrollTicker();
+            updateLastUpdated(lastUpdatedISOGlobal);
+            renderSpecialFilters();
+            renderThirumuttamUpdates();
+            if (filterModal.style.display === 'block' && lastFilterKey) {
+                showFilterModal(lastFilterKey, t('filterLabels')[lastFilterKey] || lastFilterKey);
+            }
+        }
+    }
+
+    langBtnEn.onclick = () => {
+        if (currentLang === 'en') return;
+        currentLang = 'en';
+        localStorage.setItem('theyyam_lang', currentLang);
+        applyLanguage();
+    };
+    langBtnMl.onclick = () => {
+        if (currentLang === 'ml') return;
+        currentLang = 'ml';
+        localStorage.setItem('theyyam_lang', currentLang);
+        applyLanguage();
+    };
+
+    function startAutoUpdateTimer() {
+        setInterval(fetchSheetData, 60 * 1000);
+    }
+
+    applyLanguage();
+
+    // 🆕 ഇനി google.script.run ഉള്ളോ ഇല്ലയോ എന്ന് നോക്കേണ്ടതില്ല —
+    // JSONP വഴി എപ്പോഴും (ഏത് ഡൊമെയ്നിൽ ആയാലും) ഡാറ്റ ലോഡ് ചെയ്യും.
+    fetchSheetData();
+    fetchVisitCount();
+    startAutoUpdateTimer();
+</script>
+    </body>
+</html>
