@@ -1228,15 +1228,13 @@
 
     langBtnEn.onclick = () => {
         if (currentLang === 'en') return;
-        currentLang = 'en';
-        localStorage.setItem('theyyam_lang', currentLang);
-        applyLanguage();
+        localStorage.setItem('theyyam_lang', 'en');
+        location.reload();
     };
     langBtnMl.onclick = () => {
         if (currentLang === 'ml') return;
-        currentLang = 'ml';
-        localStorage.setItem('theyyam_lang', currentLang);
-        applyLanguage();
+        localStorage.setItem('theyyam_lang', 'ml');
+        location.reload();
     };
 
     function startAutoUpdateTimer() {
