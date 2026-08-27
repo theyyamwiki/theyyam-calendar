@@ -5,25 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title id="pageTitle">Theyyam Calendar</title>
 
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=fallback">
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        /* 🆕 Google Fonts CDN-ന് പകരം, അതേ repo-യിലെ WOFF2 ഫോണ്ട് self-host ചെയ്യുന്നു —
-           extra DNS/TLS lookup ഒഴിവാക്കി വേഗത കൂട്ടാൻ. fonts/NotoSansMalayalam.woff2
-           ഈ Index.html ഇരിക്കുന്ന അതേ repo-യിൽ 'fonts' ഫോൾഡറിൽ upload ചെയ്തിരിക്കണം. */
-        @font-face {
-            font-family: 'Noto Sans Malayalam';
-            src: url('fonts/NotoSansMalayalam-Regular.woff2') format('woff2');
-            font-weight: 400;
-            font-display: swap;
-        }
-        @font-face {
-            font-family: 'Noto Sans Malayalam';
-            src: url('fonts/NotoSansMalayalam-Bold.woff2') format('woff2');
-            font-weight: 700;
-            font-display: swap;
-        }
 
         .main-banner{ text-align:center; margin-bottom:10px; }
         .banner-image{ width:100%; height:auto; display:block; border-radius:10px; }
@@ -42,7 +31,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, .2)
         }
         .header-red-section {
-            background-color: #FF392E; margin: -16px -16px 10px -16px; padding: 12px 16px 16px;
+            background-color: #8f1414; margin: -16px -16px 10px -16px; padding: 12px 16px 16px;
         }
         .lang-toggle-bar {
             text-align: right; margin-bottom: 8px; display: flex;
@@ -72,12 +61,11 @@
         h1 { text-align: center; color: #c62828; margin: 0 0 3px 0; font-size: 1.7em; padding-top: 5px; line-height: 1.2 }
         .status-message { text-align: center; padding: 20px; font-size: .9em; color: #e65100 }
         #statusDisplay { padding: 5px 0; margin-bottom: 10px }
+        .date-limit-notice { font-size: 0.8em; font-style: italic; color: #a1442f; font-weight: 400; }
         .status-header-common {
-            text-align: center; font-size: 1.05em; font-weight: 700; color: #7a1414;
-            background-color: transparent; padding: 4px 10px 0; margin-bottom: 4px;
-            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            text-align: center; font-size: .95em; font-weight: 700; color: #7a1414;
+            background-color: transparent; padding: 0; margin: 2px 0 10px
         }
-        .date-limit-notice { font-size: 0.8em; font-style: italic; color: #b9862e; font-weight: 400; }
         .status-icon-bar {
             display: flex; justify-content: space-around; border: 1px solid #c62828;
             border-radius: 5px; padding: 5px 0; margin-bottom: 10px
@@ -228,7 +216,7 @@
         .last-updated { display: block; margin-top: 10px; font-style: italic; }
         @media (max-width:450px) {
             .container { padding: 5px; margin: 5px auto; }
-            .header-red-section { margin: -5px -5px 10px -5px; }
+            .header-red-section { margin: -5px -5px 10px -5px; padding: 10px 10px 12px; }
             h1 { font-size: 1.5em; }
             .status-btn { font-size: 0.9em; padding: 5px; }
             #liveUpdateContent { grid-template-columns: 1fr; }
@@ -249,16 +237,11 @@
             </div>
 
             <div class="main-banner">
-                <img id="mainBannerImage" src="https://github.com/theyyamwiki/setting/blob/main/hed-mal.png?raw=true" alt="Theyyam Calendar" class="banner-image">
+                <img id="mainBannerImage" src="https://raw.githubusercontent.com/theyyamwiki/setting/main/hed-mal.png" alt="Theyyam Calendar" class="banner-image">
             </div>
         </div>
 
         <div id="statusDisplay">
-            <div class="status-header-common">
-                <span id="statusHeaderText"></span>
-                <span class="date-limit-notice" id="dateLimitText"></span>
-            </div>
-
             <div id="scrollTickerContainer" class="scroll-ticker-container" style="display:none;">
                 <div id="scrollTickerContent" class="scroll-ticker-content"></div>
             </div>
@@ -274,6 +257,11 @@
         <div id="statusMessage" class="status-message"></div>
 
         <div id="calendarArea" style="display:none;">
+
+            <div class="status-header-common">
+                <span id="statusHeaderText"></span>
+                <span class="date-limit-notice" id="dateLimitText"></span>
+            </div>
 
             <div class="calendar-header">
                 <button id="prevMonth" class="nav-btn"></button>
@@ -417,67 +405,67 @@
             dayNames: ["\u0d1e\u0d3e","\u0d24\u0d3f","\u0d1a\u0d4a","\u0d2c\u0d41","\u0d35്\u0d2f\u0d3e","\u0d35\u0d46","\u0d36"],
             modalDateDefault: "\u0d07\u0d28്\u0d28\u0d24്\u0d24\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
             eventDetailsPlaceholder: "\u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d15്\u0d32\u0d3f\u0d15്\u0d15് \u0d1a\u0d46\u0d2f്\u0d24\u0d3e\u0d7d \u0d35\u0d3f\u0d35\u0d30\u0d19്\u0d19\u0d7e \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15\u0d3e\u0d23\u0d3e\u0d02.",
-            searchBoxHeading: "\u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d24\u0d3f\u0d30\u0d2f\u0d42 (\u0d15\u0d3e\u0d35், \u0d38്\u0d25\u0d32\u0d02, \u0d24\u0d46\u0d2f்\u0d2f\u0d02):",
-            searchPlaceholder: "\u0d15\u0d3e\u0d35்,\u0d24\u0d46\u0d2f்\u0d2f\u0d02,\u0d38்\u0d25\u0d32\u0d02",
-            searchTitle: "\u0d15\u0d3e\u0d35், \u0d24\u0d31\u0d35\u0d3e\u0d1f்,\u0d24\u0d46\u0d2f்\u0d2f\u0d02 \u0d38்\u0d25\u0d32\u0d24்\u0d24\u0d3f\u0d28்\u0d31\u0d46 \u0d2a\u0d47\u0d30்.",
-            featuredTheyyams: "\u0d2a்\u0d30\u0d27\u0d3e\u0d28 \u0d24\u0d46\u0d2f்\u0d2f\u0d02",
-            footerMessage1: "2014 \u0d2e\u0d41\u0d24\u0d7d Theyyam Calendar WhatsApp \u0d17്\u0d30\u0d42\u0d2a்\u0d2a\u0d3f\u0d28்\u0d31\u0d46 \u0d2a\u0d3f\u0d28்\u0d24\u0d41\u0d23\u0d2f\u0d4b\u0d1f\u0d46",
-            lastUpdatedLabel: "\u0d05\u0d35\u0d38\u0d3e\u0d28\u0d02 \u0d24\u0d3f\u0d30\u0d41\u0d24்\u0d24\u0d3f\u0d2f\u0d24்: ",
-            eventsWord: "\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d7e",
-            noAnnouncements: "\u0d2a்\u0d30\u0d24்\u0d2f\u0d47\u0d15 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a்\u0d2a\u0d41\u0d15\u0d33\u0d4a\u0d28்\u0d28\u0d41\u0d02 \u0d07\u0d32்\u0d32.",
-            noScrollAnnouncements: "\u0d38்\u0d15்\u0d30\u0d4b\u0d7e \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a்\u0d2a\u0d41\u0d15\u0d7e \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32.",
-            announcementPrefix: "\ud83d\udce3 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a்\u0d2a்:",
+            searchBoxHeading: "\u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d24\u0d3f\u0d30\u0d2f\u0d42 (\u0d15\u0d3e\u0d35്, \u0d38്\u0d25\u0d32\u0d02, \u0d24\u0d46\u0d2f്\u0d2f\u0d02):",
+            searchPlaceholder: "\u0d15\u0d3e\u0d35്,\u0d24\u0d46\u0d2f്\u0d2f\u0d02,\u0d38്\u0d25\u0d32\u0d02",
+            searchTitle: "\u0d15\u0d3e\u0d35്, \u0d24\u0d31\u0d35\u0d3e\u0d1f്,\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d38്\u0d25\u0d32\u0d24്\u0d24\u0d3f\u0d28്\u0d31\u0d46 \u0d2a\u0d47\u0d30്.",
+            featuredTheyyams: "\u0d2a്\u0d30\u0d27\u0d3e\u0d28 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
+            footerMessage1: "2014 \u0d2e\u0d41\u0d24\u0d7d Theyyam Calendar WhatsApp \u0d17്\u0d30\u0d42\u0d2a്\u0d2a\u0d3f\u0d28്\u0d31\u0d46 \u0d2a\u0d3f\u0d28്\u0d24\u0d41\u0d23\u0d2f\u0d4b\u0d1f\u0d46",
+            lastUpdatedLabel: "\u0d05\u0d35\u0d38\u0d3e\u0d28\u0d02 \u0d24\u0d3f\u0d30\u0d41\u0d24്\u0d24\u0d3f\u0d2f\u0d24്: ",
+            eventsWord: "\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noAnnouncements: "\u0d2a്\u0d30\u0d24്\u0d2f\u0d47\u0d15 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d33\u0d4a\u0d28്\u0d28\u0d41\u0d02 \u0d07\u0d32്\u0d32.",
+            noScrollAnnouncements: "\u0d38്\u0d15്\u0d30\u0d4b\u0d7e \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d7e \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            announcementPrefix: "\ud83d\udce3 \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a്:",
             modalDatePrefix: "",
-            modalDateSuffix: "-\u0d32\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d7e",
-            noEventsOnDate: "\u0d08 \u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d33\u0d4a\u0d28்\u0d28\u0d41\u0d02 \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32.",
-            confirmedHeader: "\u2705 \u0d38்\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a்\u0d1a \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d7e",
-            pendingHeader: "\u23f3 \u0d38்\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d15்\u0d15\u0d3e\u0d24்\u0d24\u0d35 / \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d28\u0d2f\u0d3f\u0d7d",
-            statusConfirmed: "\u0d38்\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a்\u0d1a\u0d24்",
+            modalDateSuffix: "-\u0d32\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noEventsOnDate: "\u0d08 \u0d24\u0d40\u0d2f\u0d24\u0d3f\u0d2f\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d33\u0d4a\u0d28്\u0d28\u0d41\u0d02 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            confirmedHeader: "\u2705 \u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a്\u0d1a \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            pendingHeader: "\u23f3 \u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d15്\u0d15\u0d3e\u0d24്\u0d24\u0d35 / \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d28\u0d2f\u0d3f\u0d7d",
+            statusConfirmed: "\u0d38്\u0d25\u0d3f\u0d30\u0d40\u0d15\u0d30\u0d3f\u0d1a്\u0d1a\u0d24്",
             statusPending: "\u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d28\u0d2f\u0d3f\u0d7d",
-            statusPast: "\u0d15\u0d34\u0d3f\u0d1e்\u0d1e\u0d41",
-            singleDay: "\u0d12\u0d31்\u0d31 \u0d26\u0d3f\u0d35\u0d38\u0d24்\u0d24\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02",
-            endingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02 \u0d24\u0d40\u0d30\u0d41\u0d28்\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
-            startingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02 \u0d24\u0d41\u0d1f\u0d19்\u0d19\u0d41\u0d28்\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
-            middleDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02 ${i}-\u0d3e\u0d2e\u0d24்\u0d24\u0d46 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
-            ongoing: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02 \u0d28\u0d1f\u0d15்\u0d15\u0d41\u0d28்\u0d28\u0d41 (Day ${i}/${n})`,
+            statusPast: "\u0d15\u0d34\u0d3f\u0d1e്\u0d1e\u0d41",
+            singleDay: "\u0d12\u0d31്\u0d31 \u0d26\u0d3f\u0d35\u0d38\u0d24്\u0d24\u0d46 \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02",
+            endingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d24\u0d40\u0d30\u0d41\u0d28്\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            startingDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d24\u0d41\u0d1f\u0d19്\u0d19\u0d41\u0d28്\u0d28 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            middleDay: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 ${i}-\u0d3e\u0d2e\u0d24്\u0d24\u0d46 \u0d26\u0d3f\u0d35\u0d38\u0d02 (Day ${i}/${n})`,
+            ongoing: (i,n) => `\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02 \u0d28\u0d1f\u0d15്\u0d15\u0d41\u0d28്\u0d28\u0d41 (Day ${i}/${n})`,
             dateRangeJoin: (a,b) => `${a} \u0d2e\u0d41\u0d24\u0d7d ${b} \u0d35\u0d30\u0d46`,
-            placeNotAvailable: "\u0d38்\u0d25\u0d32\u0d2a்\u0d2a\u0d47\u0d30் \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32",
-            districtNotAvailable: "\u0d1c\u0d3f\u0d32்\u0d32 \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32",
-            today: "\u0d07\u0d28்\u0d28்:",
+            placeNotAvailable: "\u0d38്\u0d25\u0d32\u0d2a്\u0d2a\u0d47\u0d30് \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            districtNotAvailable: "\u0d1c\u0d3f\u0d32്\u0d32 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            today: "\u0d07\u0d28്\u0d28്:",
             date: "\u0d24\u0d40\u0d2f\u0d24\u0d3f:",
-            notAvailable: "\u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32",
-            malayalamDate: "\u0d24\u0d3f\u0d2f்\u0d2f\u0d24\u0d3f (\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02):",
-            place: "\u0d38்\u0d25\u0d32\u0d02:",
-            theyyam: "\u0d24\u0d46\u0d2f்\u0d2f\u0d02:",
-            contact: "\u0d2c\u0d28்\u0d27\u0d2a்\u0d2a\u0d46\u0d1f\u0d47\u0d23்\u0d1f \u0d28\u0d2e்\u0d2c\u0d7c:",
-            shareButton: "\u0d37\u0d47\u0d7c \u0d1a\u0d46\u0d2f்\u0d2f\u0d41\u0d15",
-            shareCopied: "\u0d15்\u0d32\u0d3f\u0d2a்\u0d2c\u0d4b\u0d7c\u0d21\u0d3f\u0d32\u0d47\u0d15்\u0d15் \u0d2a\u0d15\u0d7c\u0d24்\u0d24்\u0d3f!",
+            notAvailable: "\u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32",
+            malayalamDate: "\u0d24\u0d3f\u0d2f്\u0d2f\u0d24\u0d3f (\u0d2e\u0d32\u0d2f\u0d3e\u0d33\u0d02):",
+            place: "\u0d38്\u0d25\u0d32\u0d02:",
+            theyyam: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02:",
+            contact: "\u0d2c\u0d28്\u0d27\u0d2a്\u0d2a\u0d46\u0d1f\u0d47\u0d23്\u0d1f \u0d28\u0d2e്\u0d2c\u0d7c:",
+            shareButton: "\u0d37\u0d47\u0d7c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d15",
+            shareCopied: "\u0d15്\u0d32\u0d3f\u0d2a്\u0d2c\u0d4b\u0d7c\u0d21\u0d3f\u0d32\u0d47\u0d15്\u0d15് \u0d2a\u0d15\u0d7c\u0d24്\u0d24്\u0d3f!",
             status: "\u0d28\u0d3f\u0d32:",
-            notes: "\u0d15\u0d41\u0d31\u0d3f\u0d2a்\u0d2a\u0d41\u0d15\u0d7e:",
-            noticeLabel: "\u0d28\u0d4b\u0d1f்\u0d1f\u0d40\u0d38் / \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a்\u0d2a்:",
-            noticeYearNote: "(\u0d28\u0d4b\u0d1f்\u0d1f\u0d40\u0d38் \u0d08 \u0d35\u0d7c\u0d37\u0d24்\u0d24\u0d47\u0d24் \u0d24\u0d28்\u0d28\u0d46 \u0d06\u0d23\u0d46\u0d28்\u0d28் \u0d09\u0d31\u0d2a்\u0d2a் \u0d35\u0d30\u0d41\u0d24்\u0d24\u0d41\u0d2e\u0d32்\u0d32\u0d4b)",
-            directionsButton: "\u0d15\u0d3e\u0d35\u0d3f\u0d32\u0d47\u0d15்\u0d15\u0d41\u0d33்\u0d33 \u0d35\u0d34\u0d3f ... \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15்\u0d32\u0d3f\u0d15் \u0d1a\u0d46\u0d2f்\u0d2f\u0d41\u0d15 ...",
-            filterModalSuffix: " - \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d7e",
-            noEventsForFilter: (label) => `\u0d28\u0d3f\u0d32\u0d35\u0d3f\u0d7d ${label} \u0d07\u0d28\u0d24்\u0d24\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d19்\u0d19\u0d7e \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32.`,
-            errorLoadingPrefix: (msg) => `\u0d21\u0d3e\u0d31்\u0d31\u0d3e \u0d32\u0d4b\u0d21்\u200c \u0d1a\u0d46\u0d2f்\u0d2f\u0d41\u0d28்\u0d28\u0d24\u0d3f\u0d7d \u0d2a\u0d3f\u0d36\u0d15் \u0d38\u0d02\u0d2d\u0d35\u0d3f\u0d1a்\u0d1a\u0d41: <strong>${msg}</strong>. \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f <strong>data.csv</strong> repo-\u0d2f\u0d3f\u0d7d \u0d09\u0d23்\u0d1f\u0d4b \u0d0e\u0d28்\u0d28\u0d41\u0d02, \u0d05\u0d24\u0d3f\u0d7d \u0d28\u0d3f\u0d7c\u0d2c\u0d28்\u0d27\u0d3f\u0d24 \u0d15\u0d4b\u0d33\u0d19்\u0d19\u0d7e (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) headers \u0d06\u0d2f\u0d3f \u0d09\u0d23்\u0d1f\u0d4b \u0d0e\u0d28்\u0d28\u0d41\u0d02 \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d3f\u0d15்\u0d15\u0d41\u0d15.`,
-            dataUpdated: (d,t) => `\u0d21\u0d3e\u0d31்\u0d31\u0d3e \u0d05\u0d2a்\u0d21\u0d47\u0d31்\u0d31் \u0d1a\u0d46\u0d2f்\u0d24\u0d24்: ${d} @ ${t}`,
-            lastUpdatedUnavailable: "\u0d21\u0d3e\u0d31்\u0d31\u0d3e \u0d05\u0d2a்\u0d21\u0d47\u0d31்\u0d31் \u0d1a\u0d46\u0d2f்\u0d24 \u0d38\u0d2e\u0d2f\u0d02 \u0d32\u0d2d்\u0d2f\u0d2e\u0d32்\u0d32.",
-            noResultsFound: (term) => `"<strong>${term}</strong>" - \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a்\u0d2a் \u0d32\u0d2d\u0d3f\u0d1a்\u0d1a\u0d3f\u0d32்\u0d32.`,
-            gasNotFound: "Google Apps Script environment \u0d15\u0d23்\u0d1f\u0d46\u0d24்\u0d24\u0d3f\u0d2f\u0d3f\u0d32்\u0d32.",
-            apkDownloadLabel: "\u0d06\u0d2a்\u0d2a் \u0d21\u0d57\u0d7a\u0d32\u0d4b\u0d21்",
+            notes: "\u0d15\u0d41\u0d31\u0d3f\u0d2a്\u0d2a\u0d41\u0d15\u0d7e:",
+            noticeLabel: "\u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് / \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a്:",
+            noticeYearNote: "(\u0d28\u0d4b\u0d1f്\u0d1f\u0d40\u0d38് \u0d08 \u0d35\u0d7c\u0d37\u0d24്\u0d24\u0d47\u0d24് \u0d24\u0d28്\u0d28\u0d46 \u0d06\u0d23\u0d46\u0d28്\u0d28് \u0d09\u0d31\u0d2a്\u0d2a് \u0d35\u0d30\u0d41\u0d24്\u0d24\u0d41\u0d2e\u0d32്\u0d32\u0d4b)",
+            directionsButton: "\u0d15\u0d3e\u0d35\u0d3f\u0d32\u0d47\u0d15്\u0d15\u0d41\u0d33്\u0d33 \u0d35\u0d34\u0d3f ... \u0d07\u0d35\u0d3f\u0d1f\u0d46 \u0d15്\u0d32\u0d3f\u0d15് \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d15 ...",
+            filterModalSuffix: " - \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e",
+            noEventsForFilter: (label) => `\u0d28\u0d3f\u0d32\u0d35\u0d3f\u0d7d ${label} \u0d07\u0d28\u0d24്\u0d24\u0d3f\u0d7d \u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d19്\u0d19\u0d7e \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.`,
+            errorLoadingPrefix: (msg) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d32\u0d4b\u0d21്\u200c \u0d1a\u0d46\u0d2f്\u0d2f\u0d41\u0d28്\u0d28\u0d24\u0d3f\u0d7d \u0d2a\u0d3f\u0d36\u0d15് \u0d38\u0d02\u0d2d\u0d35\u0d3f\u0d1a്\u0d1a\u0d41: <strong>${msg}</strong>. \u0d26\u0d2f\u0d35\u0d3e\u0d2f\u0d3f <strong>data.csv</strong> repo-\u0d2f\u0d3f\u0d7d \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02, \u0d05\u0d24\u0d3f\u0d7d \u0d28\u0d3f\u0d7c\u0d2c\u0d28്\u0d27\u0d3f\u0d24 \u0d15\u0d4b\u0d33\u0d19്\u0d19\u0d7e (<strong>kavu_name, start_date, end_date, theyyam_list</strong>) headers \u0d06\u0d2f\u0d3f \u0d09\u0d23്\u0d1f\u0d4b \u0d0e\u0d28്\u0d28\u0d41\u0d02 \u0d2a\u0d30\u0d3f\u0d36\u0d4b\u0d27\u0d3f\u0d15്\u0d15\u0d41\u0d15.`,
+            dataUpdated: (d,t) => `\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24\u0d24്: ${d} @ ${t}`,
+            lastUpdatedUnavailable: "\u0d21\u0d3e\u0d31്\u0d31\u0d3e \u0d05\u0d2a്\u0d21\u0d47\u0d31്\u0d31് \u0d1a\u0d46\u0d2f്\u0d24 \u0d38\u0d2e\u0d2f\u0d02 \u0d32\u0d2d്\u0d2f\u0d2e\u0d32്\u0d32.",
+            noResultsFound: (term) => `"<strong>${term}</strong>" - \u0d05\u0d31\u0d3f\u0d2f\u0d3f\u0d2a്\u0d2a് \u0d32\u0d2d\u0d3f\u0d1a്\u0d1a\u0d3f\u0d32്\u0d32.`,
+            gasNotFound: "Google Apps Script environment \u0d15\u0d23്\u0d1f\u0d46\u0d24്\u0d24\u0d3f\u0d2f\u0d3f\u0d32്\u0d32.",
+            apkDownloadLabel: "\u0d06\u0d2a്\u0d2a് \u0d21\u0d57\u0d7a\u0d32\u0d4b\u0d21്",
             locale: "ml-IN",
             filterLabels: {
-                kativanur_veeran: "\u0d15\u0d24\u0d3f\u0d35\u0d28்\u0d28\u0d42\u0d7c \u0d35\u0d40\u0d30\u0d7b",
-                kandanar_kelan: "\u0d15\u0d23்\u0d1f\u0d28\u0d3e\u0d7c \u0d15\u0d47\u0d33\u0d7b",
-                muchilot_bhagavathy: "\u0d2e\u0d41\u0d1a்\u0d1a\u0d3f\u0d32\u0d4b\u0d1f்\u0d1f் \u0d2d\u0d17\u0d35\u0d24\u0d3f",
-                perumkaliyattam: "\u0d2a\u0d46\u0d30\u0d41\u0d19்\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f்\u0d1f\u0d02",
-                thalappoli: "\u0d24\u0d3e\u0d32\u0d2a்\u0d2a\u0d4a\u0d32\u0d3f",
-                theyyam_kettu: "\u0d24\u0d46\u0d2f்\u0d2f\u0d02 \u0d15\u0d46\u0d1f்\u0d1f்",
-                thulu_theyyam: "\u0d24\u0d41\u0d33\u0d41 \u0d24\u0d46\u0d2f்\u0d2f\u0d02",
+                kativanur_veeran: "\u0d15\u0d24\u0d3f\u0d35\u0d28്\u0d28\u0d42\u0d7c \u0d35\u0d40\u0d30\u0d7b",
+                kandanar_kelan: "\u0d15\u0d23്\u0d1f\u0d28\u0d3e\u0d7c \u0d15\u0d47\u0d33\u0d7b",
+                muchilot_bhagavathy: "\u0d2e\u0d41\u0d1a്\u0d1a\u0d3f\u0d32\u0d4b\u0d1f്\u0d1f് \u0d2d\u0d17\u0d35\u0d24\u0d3f",
+                perumkaliyattam: "\u0d2a\u0d46\u0d30\u0d41\u0d19്\u0d15\u0d33\u0d3f\u0d2f\u0d3e\u0d1f്\u0d1f\u0d02",
+                thalappoli: "\u0d24\u0d3e\u0d32\u0d2a്\u0d2a\u0d4a\u0d32\u0d3f",
+                theyyam_kettu: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d46\u0d1f്\u0d1f്",
+                thulu_theyyam: "\u0d24\u0d41\u0d33\u0d41 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
                 mookambika_gulikan: "\u0d2e\u0d42\u0d15\u0d3e\u0d02\u0d2c\u0d3f\u0d15 \u0d17\u0d41\u0d33\u0d3f\u0d15\u0d7b",
-                panchuruli: "\u0d2a\u0d1e்\u0d1a\u0d41\u0d30\u0d41\u0d33\u0d3f",
-                kozhikode_district_theyyam: "\u0d15\u0d4b\u0d34\u0d3f\u0d15்\u0d15\u0d4b\u0d1f் \u0d1c\u0d3f\u0d32்\u0d32 \u0d24\u0d46\u0d2f்\u0d2f\u0d02",
-                theekuttichathan: "\u0d24\u0d40\u0d15\u0d41\u0d1f்\u0d1f\u0d3f\u0d1a\u0d3e\u0d24்\u0d24\u0d7b"
+                panchuruli: "\u0d2a\u0d1e്\u0d1a\u0d41\u0d30\u0d41\u0d33\u0d3f",
+                kozhikode_district_theyyam: "\u0d15\u0d4b\u0d34\u0d3f\u0d15്\u0d15\u0d4b\u0d1f് \u0d1c\u0d3f\u0d32്\u0d32 \u0d24\u0d46\u0d2f്\u0d2f\u0d02",
+                theekuttichathan: "\u0d24\u0d40\u0d15\u0d41\u0d1f്\u0d1f\u0d3f\u0d1a\u0d3e\u0d24്\u0d24\u0d7b"
             }
         }
     };
@@ -485,8 +473,8 @@
     let currentLang = localStorage.getItem('theyyam_lang') || 'en';
 
     const BANNER_IMAGES = {
-        en: "https://github.com/theyyamwiki/setting/blob/main/hed-eng.png?raw=true",
-        ml: "https://github.com/theyyamwiki/setting/blob/main/hed-mal.png?raw=true"
+        en: "https://raw.githubusercontent.com/theyyamwiki/setting/main/hed-eng.png",
+        ml: "https://raw.githubusercontent.com/theyyamwiki/setting/main/hed-mal.png"
     };
     const t = (key) => I18N[currentLang][key];
 
