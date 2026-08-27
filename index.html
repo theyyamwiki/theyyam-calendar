@@ -9,7 +9,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap');
+        /* 🆕 Google Fonts CDN-ന് പകരം, അതേ repo-യിലെ WOFF2 ഫോണ്ട് self-host ചെയ്യുന്നു —
+           extra DNS/TLS lookup ഒഴിവാക്കി വേഗത കൂട്ടാൻ. fonts/NotoSansMalayalam.woff2
+           ഈ Index.html ഇരിക്കുന്ന അതേ repo-യിൽ 'fonts' ഫോൾഡറിൽ upload ചെയ്തിരിക്കണം. */
+        @font-face {
+            font-family: 'Noto Sans Malayalam';
+            src: url('fonts/NotoSansMalayalam.woff2') format('woff2-variations'),
+                 url('fonts/NotoSansMalayalam.woff2') format('woff2');
+            font-weight: 400 700;
+            font-display: swap;
+        }
 
         .main-banner{ text-align:center; margin-bottom:10px; }
         .banner-image{ width:100%; height:auto; display:block; border-radius:10px; }
