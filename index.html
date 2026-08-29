@@ -11,13 +11,13 @@
     <meta property="og:site_name" content="Theyyam Calendar">
     <meta property="og:title" content="Theyyam Calendar | തെയ്യം കലണ്ടർ">
     <meta property="og:description" content="Kerala's Theyyam festival dates and kavu details, in Malayalam and English. തെയ്യം കലിയാട്ട തീയതികളും കാവ് വിവരങ്ങളും.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/theyyamwiki/setting/main/hed-mal.png">
+    <meta property="og:image" content="https://raw.githubusercontent.com/theyyamwiki/setting/main/logo-square.png">
     <meta property="og:url" content="https://www.theyyamcalendar.in/">
 
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="Theyyam Calendar | തെയ്യം കലണ്ടർ">
     <meta name="twitter:description" content="Kerala's Theyyam festival dates and kavu details, in Malayalam and English. തെയ്യം കലിയാട്ട തീയതികളും കാവ് വിവരങ്ങളും.">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/theyyamwiki/setting/main/hed-mal.png">
+    <meta name="twitter:image" content="https://raw.githubusercontent.com/theyyamwiki/setting/main/logo-square.png">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,6 +231,21 @@
         }
         .footer-message { margin: 5px 0; }
         .last-updated { display: block; margin-top: 10px; font-style: italic; }
+        .pinned-thumb {
+            width: 64px; height: 64px; object-fit: cover; border-radius: 8px; cursor: pointer;
+            border: 2px solid rgba(0,0,0,.15); flex-shrink: 0;
+        }
+        .lightbox-overlay {
+            display: none; position: fixed; z-index: 2000; left: 0; top: 0;
+            width: 100%; height: 100%; background: rgba(0,0,0,.85);
+            align-items: center; justify-content: center;
+        }
+        .lightbox-overlay.active { display: flex; }
+        .lightbox-overlay img { max-width: 92%; max-height: 92%; border-radius: 6px; box-shadow: 0 4px 20px rgba(0,0,0,.5); }
+        .lightbox-close {
+            position: absolute; top: 16px; right: 24px; color: #fff; font-size: 36px;
+            cursor: pointer; font-weight: bold; line-height: 1;
+        }
         @media (max-width:450px) {
             .container { padding: 5px; margin: 5px auto; }
             .header-red-section { margin: -5px -5px 10px -5px; padding: 10px 10px 12px; }
@@ -327,6 +342,11 @@
         </div>
     </div>
 
+    <div id="imageLightbox" class="lightbox-overlay" onclick="closeImageLightbox()">
+        <span class="lightbox-close" onclick="closeImageLightbox()">&times;</span>
+        <img id="lightboxImg" src="" alt="">
+    </div>
+
 <script>
     // ===================================================================================
     // 🆕 ഇനി Google Apps Script ആവശ്യമില്ല. ഇതേ repo-യിലെ 'data.csv' ഫയലിൽ നിന്നാണ്
@@ -398,6 +418,7 @@
             gasNotFound: "Google Apps Script environment not found.",
             apkDownloadLabel: "Download App",
             visitCalendarCaption: "Visit Theyyam Calendar:",
+            locationLabel: "Location:",
             locale: "en-IN",
             filterLabels: {
                 kativanur_veeran: "Kativanur Veeran",
@@ -472,6 +493,7 @@
             gasNotFound: "Google Apps Script environment \u0d15\u0d23്\u0d1f\u0d46\u0d24്\u0d24\u0d3f\u0d2f\u0d3f\u0d32്\u0d32.",
             apkDownloadLabel: "\u0d06\u0d2a്\u0d2a് \u0d21\u0d57\u0d7a\u0d32\u0d4b\u0d21്",
             visitCalendarCaption: "\u0d24\u0d46\u0d2f്\u0d2f\u0d02 \u0d15\u0d32\u0d23്\u0d1f\u0d7c \u0d38\u0d28്\u0d26\u0d7c\u0d36\u0d3f\u0d15്\u0d15\u0d42:",
+            locationLabel: "\u0d32\u0d4a\u0d15്\u0d15\u0d47\u0d37\u0d7b:",
             locale: "ml-IN",
             filterLabels: {
                 kativanur_veeran: "\u0d15\u0d24\u0d3f\u0d35\u0d28്\u0d28\u0d42\u0d7c \u0d35\u0d40\u0d30\u0d7b",
@@ -1011,6 +1033,11 @@
 
     const kavuClickAttr = `openKavuWikiPage(${event.rowIndex})`;
 
+    const rawPinnedImageUrl = (currentLang === 'en' && event.image_url_en && String(event.image_url_en).trim() !== '')
+        ? event.image_url_en
+        : event.image_url;
+    const pinnedThumbSrc = toDirectImageUrl(rawPinnedImageUrl);
+
     let theyyamPills = '';
     if (localizedTheyyamList) {
         localizedTheyyamList.split(/,\s*|\s*\/\s*/).forEach(tItem => {
@@ -1020,20 +1047,32 @@
             }
         });
     }
+
+    let pinnedDirectionsHTML = '';
+    if (event.googlemap_link && String(event.googlemap_link).trim() !== '') {
+        pinnedDirectionsHTML = `<a href="${event.googlemap_link}" target="_blank" class="status-btn notice-btn" style="background-color:#009688; color:white; font-size:.78em; padding:5px 10px;"><i class="fas fa-map-marker-alt"></i> ${t('directionsButton')}</a>`;
+    }
+
            detailDiv.innerHTML = `
-            <h4 style="margin:0 0 4px 0;">
-                <a href="javascript:void(0)" onclick="${kavuClickAttr}" style="color:${colorScheme.accent}; text-decoration:none; font-weight:bold;">
-                    ${localizedKavuName || t('placeNotAvailable')}
-                </a>
-            </h4>
-            <p style="margin:2px 0 8px 0; color:#555; font-size:0.9em;">
-                ${localizedPlace || t('notAvailable')}
-                <span style="color:#888;">(${localizedDistrict || t('districtNotAvailable')})</span>
-            </p>
+            <div style="display:flex; gap:10px; align-items:flex-start;">
+                ${pinnedThumbSrc ? `<img src="${pinnedThumbSrc}" alt="${(localizedKavuName || '').replace(/"/g, '&quot;')}" class="pinned-thumb" onclick="openImageLightbox('${pinnedThumbSrc.replace(/'/g, "\\'")}')">` : ''}
+                <div style="flex:1; min-width:0;">
+                    <h4 style="margin:0 0 4px 0;">
+                        <a href="javascript:void(0)" onclick="${kavuClickAttr}" style="color:${colorScheme.accent}; text-decoration:none; font-weight:bold;">
+                            ${localizedKavuName || t('placeNotAvailable')}
+                        </a>
+                    </h4>
+                    <p style="margin:2px 0 0 0; color:#555; font-size:0.9em;">
+                        ${localizedPlace || t('notAvailable')}
+                        <span style="color:#888;">(${localizedDistrict || t('districtNotAvailable')})</span>
+                    </p>
+                </div>
+            </div>
             ${theyyamPills ? `<p style="margin:8px 0; display:flex; align-items:center; flex-wrap:wrap; gap:6px;"><span style="font-weight:bold; margin-right:6px; font-size:0.9em; color:${colorScheme.accent};">${t('theyyam')}</span> ${theyyamPills}</p>` : ''}
             ${localizedDescription && String(localizedDescription).trim() !== '' ? `
                 <div class="remarks-scroll-box"><strong>${t('notes')}</strong> ${localizedDescription}</div>
             ` : ''}
+            ${pinnedDirectionsHTML ? `<div style="margin-top:8px;">${pinnedDirectionsHTML}</div>` : ''}
         `;
         return detailDiv;
     }
@@ -1158,7 +1197,8 @@
                         district: localizedDistrict,
                         theyyamList: localizedTheyyamList,
                         dateRange: dateRange,
-                        description: localizedDescription
+                        description: localizedDescription,
+                        mapLink: event.googlemap_link
                     }).replace(/"/g, '&quot;')}">
                     <i class="fab fa-whatsapp"></i> ${t('shareButton')}
                 </button>
@@ -1181,7 +1221,7 @@
         return `${SITE_LINK}/?${params.toString()}`;
     }
 
-    function buildShareText({ eventLink, kavuName, place, district, theyyamList, dateRange, description }) {
+    function buildShareText({ eventLink, kavuName, place, district, theyyamList, dateRange, description, mapLink }) {
         const lines = [];
         if (eventLink) {
             lines.push(eventLink);
@@ -1193,10 +1233,21 @@
         if (dateRange) lines.push(`${t('date')} ${dateRange}`);
         if (theyyamList) lines.push(`${t('theyyam')} ${theyyamList}`);
         if (description && String(description).trim() !== '') lines.push(`${t('notes')} ${description}`);
+        if (mapLink && String(mapLink).trim() !== '') lines.push(`${t('locationLabel')} ${mapLink}`);
         lines.push('');
         lines.push(t('visitCalendarCaption'));
         lines.push(SITE_LINK);
         return lines.join('\n');
+    }
+
+    function openImageLightbox(url) {
+        if (!url) return;
+        document.getElementById('lightboxImg').src = url;
+        document.getElementById('imageLightbox').classList.add('active');
+    }
+    function closeImageLightbox() {
+        document.getElementById('imageLightbox').classList.remove('active');
+        document.getElementById('lightboxImg').src = '';
     }
 
     function toDirectImageUrl(url) {
