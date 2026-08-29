@@ -610,7 +610,10 @@
     const TODAY = new Date();
     TODAY.setHours(0, 0, 0, 0);
     const TODAY_TIME = TODAY.getTime();
-    const MAX_DAYS_AHEAD = 60;
+    const MAX_DAYS_AHEAD = 30;
+    // ⚠️ ടെസ്റ്റിങ്ങിന്: ലിങ്കിന്റെ അവസാനം ?admin=1 ചേർത്താൽ (ഉദാ: theyyamcalendar.in/?admin=1)
+    // 30 ദിവസത്തെ പരിധി ഒഴിവാക്കി ഭാവിയിലെ എല്ലാ ഇവന്റുകളും കാണിക്കും. സാധാരണ ലിങ്കിൽ ഇത് ബാധകമല്ല.
+    const ADMIN_PREVIEW = new URLSearchParams(window.location.search).get('admin') === '1';
 
     let lastShownEvents = [];
     let lastShownDate = TODAY;
@@ -736,9 +739,11 @@
             const MAX_DATE = addDays(TODAY, MAX_DAYS_AHEAD);
             ALL_EVENTS = ALL_EVENTS.filter(e => {
                 if (isPinnedFlagRow(e) && (!e.startDateObj || !e.endDateObj)) return true;
-                return e.startDateObj && !isNaN(e.startDateObj.getTime()) &&
-                    e.endDateObj && !isNaN(e.endDateObj.getTime()) &&
-                    e.startDateObj <= MAX_DATE;
+                const hasValidDates = e.startDateObj && !isNaN(e.startDateObj.getTime()) &&
+                    e.endDateObj && !isNaN(e.endDateObj.getTime());
+                if (!hasValidDates) return false;
+                if (ADMIN_PREVIEW) return true;
+                return e.startDateObj <= MAX_DATE;
             });
             ALL_EVENTS.sort((a, b) => (a.startDateObj || 0) - (b.startDateObj || 0));
 
@@ -1371,7 +1376,9 @@
         langBtnEn.classList.toggle('active', currentLang === 'en');
         langBtnMl.classList.toggle('active', currentLang === 'ml');
         document.getElementById('statusHeaderText').textContent = t('statusHeader');
-        document.getElementById('dateLimitText').textContent = t('dateLimit');
+        document.getElementById('dateLimitText').textContent = ADMIN_PREVIEW
+            ? '⚠️ ADMIN PREVIEW MODE — showing ALL upcoming events (30-day limit off)'
+            : t('dateLimit');
         document.getElementById('liveUpdateHeadingText').textContent = t('liveUpdateHeading');
         document.getElementById('statusMessage').textContent = t('statusMessageLoading');
         document.getElementById('eventDetailsPlaceholder').textContent = t('eventDetailsPlaceholder');
