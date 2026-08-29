@@ -1163,7 +1163,6 @@
         const dateStr = toYYYYMMDD(event.startDateObj);
         const params = new URLSearchParams();
         params.set('date', dateStr);
-        if (event.kavu_name) params.set('kavu', event.kavu_name);
         if (event.rowIndex) params.set('row', event.rowIndex);
         return `${SITE_LINK}/?${params.toString()}`;
     }
