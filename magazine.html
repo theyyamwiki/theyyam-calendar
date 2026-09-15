@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ml" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title id="pageTitle">തെയ്യം മാഗസിൻ : ചായില്യം | Theyyam Calendar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=fallback">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<style>
+body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#fc0505;color:#333;font-size:.95em}
+.container{max-width:950px;margin:20px auto;padding:16px;background-color:#fffaf6;border-radius:14px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.page-header{background-color:#8f1414;margin:-16px -16px 18px -16px;padding:16px;border-radius:14px 14px 0 0;text-align:center}
+.page-header h1{color:#fff;margin:0;font-size:1.5em}
+.page-header .lang-toggle{margin-top:8px;display:flex;justify-content:center;gap:6px}
+.lang-btn{background-color:#eee;color:#333;border:1px solid #ccc;padding:5px 12px;border-radius:16px;cursor:pointer;font-size:.8em;font-weight:700}
+.lang-btn.active{background-color:#2e2e2e;color:#fff;border-color:#2e2e2e}
+.back-link{display:inline-block;margin-top:10px;color:gold;text-decoration:none;font-weight:700;font-size:.85em}
+.back-link:hover{text-decoration:underline}
+.latest-issue{background:#d9a441;border:2px solid #b9862e;border-radius:12px;padding:18px;text-align:center;margin-bottom:22px}
+.latest-issue h2{color:#7a1414;margin:0 0 12px 0;font-size:1.1em}
+.latest-cover-link{display:inline-block;text-decoration:none}
+.latest-cover-link img{max-width:280px;width:100%;border-radius:8px;box-shadow:0 6px 18px rgba(0,0,0,.35);transition:transform .2s}
+.latest-cover-link:hover img{transform:scale(1.03)}
+.latest-title{margin-top:12px;font-weight:700;color:#7a1414;font-size:1.05em}
+.read-btn{display:inline-block;margin-top:12px;background-color:#7a1414;color:gold;padding:9px 22px;border-radius:6px;text-decoration:none;font-weight:700;font-size:.9em}
+.read-btn:hover{background-color:#941a1a}
+.old-issues-heading{color:#c62828;font-size:1.05em;margin:0 0 10px 0;padding-left:4px;border-left:4px solid #c62828}
+.old-issues-rail{display:flex;gap:12px;overflow-x:auto;padding:6px 2px 14px 2px;-webkit-overflow-scrolling:touch}
+.old-issue-card{flex:0 0 auto;width:110px;text-align:center;text-decoration:none;color:#333}
+.old-issue-card img{width:110px;height:150px;object-fit:cover;border-radius:6px;border:2px solid #d9a441;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
+.old-issue-card:hover img{transform:scale(1.05);border-color:#c62828}
+.old-issue-card .issue-label{display:block;margin-top:6px;font-size:.75em;font-weight:700;color:#7a1414}
+.no-old-issues{color:#888;font-size:.9em;padding:10px 4px}
+.footer-note{text-align:center;margin-top:20px;color:#666;font-size:.85em}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="page-header">
+    <h1 id="pageHeading"><i class="fas fa-book-open"></i> <span id="titleText"></span></h1>
+    <div class="lang-toggle">
+      <button class="lang-btn" id="langBtnMl" type="button">മലയാളം</button>
+      <button class="lang-btn" id="langBtnEn" type="button">English</button>
+    </div>
+    <a class="back-link" href="index.html" id="backLink">← കലണ്ടറിലേക്ക് മടങ്ങുക / Back to Calendar</a>
+  </div>
+
+  <div class="latest-issue">
+    <h2 id="latestHeading"></h2>
+    <a class="latest-cover-link" id="latestCoverLink" target="_blank" rel="noopener noreferrer">
+      <img id="latestCoverImg" src="" alt="Latest Issue Cover">
+    </a>
+    <div class="latest-title" id="latestTitleText"></div>
+    <br>
+    <a class="read-btn" id="latestReadBtn" target="_blank" rel="noopener noreferrer"></a>
+  </div>
+
+  <h3 class="old-issues-heading" id="oldIssuesHeading"></h3>
+  <div class="old-issues-rail" id="oldIssuesRail"></div>
+
+  <div class="footer-note">Theyyam Calendar — ചായില്യം</div>
+</div>
+
+<script>
+/* ============================================================
+   MAGAZINE ISSUES LIST
+   ------------------------------------------------------------
+   ഓരോ പുതിയ ചായില്യം ലക്കം publish ചെയ്യുമ്പോൾ, താഴെയുള്ള
+   ISSUES array-യിൽ ഒരു പുതിയ { } object കൂട്ടിച്ചേർത്താൽ മതി.
+   date ഏറ്റവും പുതിയതായിരിക്കുന്ന issue സ്വയമേവ മുകളിൽ
+   വലുതായി കാണിക്കും; ബാക്കിയെല്ലാം താഴെ rail-ൽ വരും.
+
+   title : ലക്കത്തിന്റെ പേര് / തീം (ഉദാ: "ചായില്യം ലക്കം 3")
+   date  : "YYYY-MM-DD" ഫോർമാറ്റിൽ (ഏതാണ് പുതിയത് എന്ന്
+           കണ്ടെത്താൻ ഉപയോഗിക്കുന്നു)
+   cover : കവർ ഫോട്ടോയുടെ നേരിട്ടുള്ള ലിങ്ക് (image URL)
+   link  : e-book / PDF വായിക്കാനുള്ള ലിങ്ക്
+   ============================================================ */
+const ISSUES = [
+  // ഉദാഹരണം (ശരിയായ വിവരങ്ങൾ വെച്ച് മാറ്റുകയോ, ഇതിന് താഴെ
+  // പുതിയവ കൂട്ടിച്ചേർക്കുകയോ ചെയ്യുക):
+  // {
+  //   title: "ചായില്യം ലക്കം 1",
+  //   date: "2026-01-15",
+  //   cover: "https://example.com/chayilyam-issue1-cover.jpg",
+  //   link: "https://example.com/chayilyam-issue1.pdf"
+  // },
+];
+
+const I18N = {
+  ml: {
+    pageTitle: "തെയ്യം മാഗസിൻ : ചായില്യം | Theyyam Calendar",
+    title: "തെയ്യം മാഗസിൻ : ചായില്യം",
+    backLink: "← കലണ്ടറിലേക്ക് മടങ്ങുക",
+    latestHeading: "ഏറ്റവും പുതിയ ലക്കം",
+    readBtn: "ഇ-മാഗസിൻ വായിക്കുക",
+    oldIssuesHeading: "പഴയ ലക്കങ്ങൾ",
+    noOldIssues: "പഴയ ലക്കങ്ങൾ ഇതുവരെ ഇല്ല.",
+    noIssues: "മാഗസിൻ ലക്കങ്ങൾ ഉടൻ ലഭ്യമാകും."
+  },
+  en: {
+    pageTitle: "Theyyam Magazine: Chayilyam | Theyyam Calendar",
+    title: "Theyyam Magazine: Chayilyam",
+    backLink: "← Back to Calendar",
+    latestHeading: "Latest Issue",
+    readBtn: "Read E-Magazine",
+    oldIssuesHeading: "Older Issues",
+    noOldIssues: "No older issues yet.",
+    noIssues: "Magazine issues will be available soon."
+  }
+};
+
+let currentLang = localStorage.getItem("theyyam_lang") || "en";
+const t = key => I18N[currentLang][key];
+
+function renderMagazine() {
+  document.getElementById("htmlRoot").lang = currentLang;
+  document.getElementById("pageTitle").textContent = t("pageTitle");
+  document.title = t("pageTitle");
+  document.getElementById("titleText").textContent = t("title");
+  document.getElementById("backLink").textContent = t("backLink");
+  document.getElementById("latestHeading").textContent = t("latestHeading");
+  document.getElementById("latestReadBtn").textContent = t("readBtn");
+  document.getElementById("oldIssuesHeading").textContent = t("oldIssuesHeading");
+  document.getElementById("langBtnMl").classList.toggle("active", currentLang === "ml");
+  document.getElementById("langBtnEn").classList.toggle("active", currentLang === "en");
+
+  const sorted = [...ISSUES].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const latestSection = document.querySelector(".latest-issue");
+  if (sorted.length === 0) {
+    latestSection.innerHTML = `<p style="color:#7a1414;font-weight:700;padding:20px;">${t("noIssues")}</p>`;
+    document.getElementById("oldIssuesRail").innerHTML = `<div class="no-old-issues">${t("noOldIssues")}</div>`;
+    return;
+  }
+
+  const latest = sorted[0];
+  document.getElementById("latestCoverLink").href = latest.link;
+  document.getElementById("latestCoverImg").src = latest.cover;
+  document.getElementById("latestCoverImg").alt = latest.title;
+  document.getElementById("latestTitleText").textContent = latest.title;
+  document.getElementById("latestReadBtn").href = latest.link;
+
+  const older = sorted.slice(1);
+  const rail = document.getElementById("oldIssuesRail");
+  rail.innerHTML = "";
+  if (older.length === 0) {
+    rail.innerHTML = `<div class="no-old-issues">${t("noOldIssues")}</div>`;
+  } else {
+    older.forEach(issue => {
+      const a = document.createElement("a");
+      a.className = "old-issue-card";
+      a.href = issue.link;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      a.innerHTML = `<img src="${issue.cover}" alt="${issue.title}"><span class="issue-label">${issue.title}</span>`;
+      rail.appendChild(a);
+    });
+  }
+}
+
+document.getElementById("langBtnEn").onclick = () => { currentLang = "en"; localStorage.setItem("theyyam_lang", "en"); renderMagazine(); };
+document.getElementById("langBtnMl").onclick = () => { currentLang = "ml"; localStorage.setItem("theyyam_lang", "ml"); renderMagazine(); };
+
+renderMagazine();
+</script>
+</body>
+</html>
