@@ -40,7 +40,9 @@ theekuttichathan, Dupli_id_No
 (thirumuttam / thirumuttam_e exist in the sheet but aren't used here.)
 """
 
+import base64
 import csv
+import io
 import json
 import os
 import re
@@ -99,9 +101,28 @@ def slugify(text):
     return text.strip("-") or "kavu"
 
 
+def decode_csv_payload(text):
+    """The site's index.html base64-encodes data.csv before committing it
+    (as a light anti-copy measure) and decodes it client-side with a JS
+    decodeCsvPayload() function before parsing. This mirrors that exact
+    logic in Python, so this script sees the same plain CSV the site does.
+    If the content is already plain CSV (not base64), decoding fails or
+    doesn't contain "kavu_name" and the original text is returned unchanged."""
+    stripped = (text or "").strip()
+    try:
+        decoded = base64.b64decode(stripped, validate=True).decode("utf-8")
+        if "kavu_name" in decoded:
+            return decoded
+    except Exception:
+        pass
+    return text
+
+
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+        raw = f.read()
+    content = decode_csv_payload(raw)
+    return list(csv.DictReader(io.StringIO(content)))
 
 
 def is_primary_row(row):
