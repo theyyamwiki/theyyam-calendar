@@ -105,11 +105,9 @@ def read_rows(csv_path):
 
 
 def is_primary_row(row):
-    """Skip rows that are flagged as a duplicate of another kavu_id."""
-    kavu_id = (row.get("kavu_id") or "").strip()
-    dupli = (row.get("Dupli_id_No") or "").strip()
-    if dupli and dupli != kavu_id:
-        return False
+    """Dupli_id_No is just a manual duplicate-check column the user keeps
+    in the sheet for their own reference - it doesn't mean anything about
+    whether this row should get a page, so it's not used here."""
     status = (row.get("status") or "").strip().lower()
     if status in SKIP_STATUS_VALUES:
         return False
