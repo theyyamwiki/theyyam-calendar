@@ -49,6 +49,14 @@ from datetime import date
 from html import escape as h
 from xml.sax.saxutils import escape as x
 
+# Your data.csv has at least one very long cell (likely a long description,
+# scroll_box text, or an embedded long URL) that exceeds Python's default
+# 131072-byte CSV field limit. Raise it so csv.DictReader doesn't error out.
+try:
+    csv.field_size_limit(sys.maxsize)
+except OverflowError:
+    csv.field_size_limit(2**31 - 1)
+
 OUTPUT_DIR = "kavu_pages"
 
 # Rows whose `status` value (case-insensitive) is in this set are skipped.
