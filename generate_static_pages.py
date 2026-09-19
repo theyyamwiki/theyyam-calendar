@@ -40,9 +40,7 @@ theekuttichathan, Dupli_id_No
 (thirumuttam / thirumuttam_e exist in the sheet but aren't used here.)
 """
 
-import base64
 import csv
-import io
 import json
 import os
 import re
@@ -101,28 +99,9 @@ def slugify(text):
     return text.strip("-") or "kavu"
 
 
-def decode_csv_payload(text):
-    """The site's index.html base64-encodes data.csv before committing it
-    (as a light anti-copy measure) and decodes it client-side with a JS
-    decodeCsvPayload() function before parsing. This mirrors that exact
-    logic in Python, so this script sees the same plain CSV the site does.
-    If the content is already plain CSV (not base64), decoding fails or
-    doesn't contain "kavu_name" and the original text is returned unchanged."""
-    stripped = (text or "").strip()
-    try:
-        decoded = base64.b64decode(stripped, validate=True).decode("utf-8")
-        if "kavu_name" in decoded:
-            return decoded
-    except Exception:
-        pass
-    return text
-
-
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig") as f:
-        raw = f.read()
-    content = decode_csv_payload(raw)
-    return list(csv.DictReader(io.StringIO(content)))
+        return list(csv.DictReader(f))
 
 
 def is_primary_row(row):
@@ -399,22 +378,13 @@ def main():
     with open("robots.txt", "w", encoding="utf-8") as f:
         f.write(build_robots_txt(base_url))
 
-    with open("kavu_links.html", "w", encoding="utf-8") as f:
-        f.write(build_links_block(entries, base_url))
-
-    injected = inject_links_into_index("index.html", build_links_block(entries, base_url))
+    # No public link list is written or injected into index.html on purpose -
+    # the sitemap.xml above is what gets these pages indexed by Google;
+    # index.html stays as it is, so there's no one-click browsable list of
+    # every kavu on the site itself.
 
     print(f"Generated {len(entries)} pages in ./{OUTPUT_DIR}/")
-    print("Also wrote: sitemap.xml, robots.txt, kavu_links.html")
-    if injected:
-        print("index.html: link list auto-updated between KAVU_LINKS markers.")
-    else:
-        print(
-            "index.html: markers not found, so it was NOT modified. Add these two\n"
-            "lines to index.html once, wherever you want the link list to show:\n"
-            f"  {LINKS_START_MARKER}\n  {LINKS_END_MARKER}\n"
-            "After that, this script fills in the content between them automatically."
-        )
+    print("Also wrote: sitemap.xml, robots.txt")
     print("\nNext steps:")
     print(f"1. Upload the whole '{OUTPUT_DIR}' folder, sitemap.xml and robots.txt to your site.")
     print("2. Submit sitemap.xml in Google Search Console -> Sitemaps.")
