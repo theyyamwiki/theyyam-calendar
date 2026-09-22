@@ -59,6 +59,10 @@ except OverflowError:
 
 OUTPUT_DIR = "kavu_pages"
 
+# Fallback image when a kavu row has no notice/photo of its own - keeps the
+# site's current behaviour (logo) as the safety net, never a broken image.
+DEFAULT_OG_IMAGE = "https://raw.githubusercontent.com/theyyamwiki/setting/main/logo-square.png"
+
 # Rows whose `status` value (case-insensitive) is in this set are skipped.
 # Adjust this list once you know what values your `status` column actually uses.
 SKIP_STATUS_VALUES = {"draft", "inactive", "hide", "no"}
@@ -91,6 +95,22 @@ TRUE_VALUE = "yes"
 
 def is_truthy(value):
     return (value or "").strip().lower() == TRUE_VALUE
+
+
+def to_direct_image_url(url):
+    """Mirrors the site's client-side toDirectImageUrl(): turns a Google Drive
+    share link into a direct-loadable thumbnail URL. Leaves other URLs as-is."""
+    if not url:
+        return ""
+    url = str(url).strip()
+    if not url:
+        return ""
+    m = re.search(r"/d/([a-zA-Z0-9_-]+)", url)
+    if not m:
+        m = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", url)
+    if m:
+        return f"https://drive.google.com/thumbnail?id={m.group(1)}&sz=w1000"
+    return url
 
 
 def slugify(text):
@@ -147,6 +167,18 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{title}</title>
 <meta name="description" content="{meta_description}">
+<link rel="canonical" href="{page_url}">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Theyyam Calendar">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{meta_description}">
+<meta property="og:image" content="{og_image}">
+<meta property="og:image:width" content="1000">
+<meta property="og:url" content="{page_url}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{meta_description}">
+<meta name="twitter:image" content="{og_image}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap">
 <script type="application/ld+json">
 {json_ld}
@@ -229,6 +261,9 @@ def build_page(row, slug, base_url):
     title = f"{name_e} Kaliyattam & Theyyam Dates | Theyyam Calendar"
     meta_desc = f"{theyyam_list_e or name_e} at {place_e}, {district_e}. Dates: {start_date}{' to ' + end_date_val if end_date_val else ''}."
 
+    og_image = to_direct_image_url(image_en) or to_direct_image_url(image_ml) or DEFAULT_OG_IMAGE
+    page_url = f"{base_url.rstrip('/')}/kavu_pages/{slug}.html"
+
     lat, lon = parse_latlon(maplink)
     place_obj = {
         "@type": "Place",
@@ -263,6 +298,8 @@ def build_page(row, slug, base_url):
     html = PAGE_TEMPLATE.format(
         title=h(title),
         meta_description=h(meta_desc),
+        og_image=h(og_image),
+        page_url=h(page_url),
         json_ld=json.dumps(json_ld, ensure_ascii=False, indent=2),
         name_e=h(name_e),
         place_e=h(place_e),
@@ -378,13 +415,20 @@ def main():
     with open("robots.txt", "w", encoding="utf-8") as f:
         f.write(build_robots_txt(base_url))
 
+    # kavu_id -> slug map, read by index.html so the "Share" button links
+    # straight to that kavu's static page (which carries the correct
+    # og:image) instead of the old ?date=&row= link, which always showed
+    # the site logo in WhatsApp/social previews.
+    with open("kavu_slugs.json", "w", encoding="utf-8") as f:
+        json.dump(slug_map, f, ensure_ascii=False)
+
     # No public link list is written or injected into index.html on purpose -
     # the sitemap.xml above is what gets these pages indexed by Google;
     # index.html stays as it is, so there's no one-click browsable list of
     # every kavu on the site itself.
 
     print(f"Generated {len(entries)} pages in ./{OUTPUT_DIR}/")
-    print("Also wrote: sitemap.xml, robots.txt")
+    print("Also wrote: sitemap.xml, robots.txt, kavu_slugs.json")
     print("\nNext steps:")
     print(f"1. Upload the whole '{OUTPUT_DIR}' folder, sitemap.xml and robots.txt to your site.")
     print("2. Submit sitemap.xml in Google Search Console -> Sitemaps.")
