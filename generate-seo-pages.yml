@@ -26,6 +26,16 @@ jobs:
           python-version: "3.11"
       - name: Generate kavu pages, sitemap.xml, robots.txt
         run: python3 generate_static_pages.py data.csv https://theyyamcalendar.in
+      - name: Sync with remote before commit
+        # Another workflow (e.g. "Sync Google Sheet to data.csv") can push to
+        # main while this job is running. Rebase onto whatever is now on
+        # main so our push below doesn't get rejected as non-fast-forward.
+        # Only committed history is rebased - the newly generated,
+        # not-yet-committed files (kavu_pages/, sitemap.xml, etc.) are left
+        # alone by this.
+        run: |
+          git fetch origin main
+          git rebase origin/main || git rebase --abort
       - name: Commit generated files
         uses: stefanzweifel/git-auto-commit-action@v5
         with:
