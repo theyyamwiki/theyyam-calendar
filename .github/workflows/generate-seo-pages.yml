@@ -48,7 +48,6 @@ jobs:
           file_pattern: >-
             kavu_pages/**
             sitemap.xml
-            robots.txt
-            kavu_links.html
+            robots.tx
             kavu_slugs.json
             index.html
