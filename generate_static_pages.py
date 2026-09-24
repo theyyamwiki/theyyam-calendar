@@ -257,7 +257,7 @@ def line(label, value):
     return f"<p class=\"meta-line\"><strong>{h(label)}</strong> {h(value)}</p>" if value else ""
 
 
-def build_page(row, slug, base_url):
+def build_page(row, slug, base_url, lang="en"):
     name_e = row.get("kavu_name_e") or row.get("kavu_name") or "Theyyam Kavu"
     name_ml = row.get("kavu_name") or name_e
     place_e = row.get("place_e") or ""
@@ -281,11 +281,20 @@ def build_page(row, slug, base_url):
 
     active_tags = [label for col, label in TAG_COLUMNS.items() if is_truthy(row.get(col))]
 
-    title = f"{name_e} Kaliyattam & Theyyam Dates | Theyyam Calendar"
-    meta_desc = f"{theyyam_list_e or name_e} at {place_e}, {district_e}. Dates: {start_date}{' to ' + end_date_val if end_date_val else ''}."
+    file_suffix = "" if lang == "en" else "-ml"
+    page_url = f"{base_url.rstrip('/')}/kavu_pages/{slug}{file_suffix}.html"
 
-    og_image = to_direct_image_url(image_en) or to_direct_image_url(image_ml) or DEFAULT_OG_IMAGE
-    page_url = f"{base_url.rstrip('/')}/kavu_pages/{slug}.html"
+    if lang == "ml":
+        # Malayalam-notice variant: share links opened while the site is in
+        # Malayalam point here, so the WhatsApp/Facebook preview shows the
+        # Malayalam notice image and Malayalam title/description.
+        title = f"{name_ml} - {theyyam_list_ml or name_ml} | Theyyam Calendar"
+        meta_desc = f"{theyyam_list_ml or name_ml}, {place_ml}, {district_ml}. {start_date}{' - ' + end_date_val if end_date_val else ''}"
+        og_image = to_direct_image_url(image_ml) or to_direct_image_url(image_en) or DEFAULT_OG_IMAGE
+    else:
+        title = f"{name_e} Kaliyattam & Theyyam Dates | Theyyam Calendar"
+        meta_desc = f"{theyyam_list_e or name_e} at {place_e}, {district_e}. Dates: {start_date}{' to ' + end_date_val if end_date_val else ''}."
+        og_image = to_direct_image_url(image_en) or to_direct_image_url(image_ml) or DEFAULT_OG_IMAGE
 
     lat, lon = parse_latlon(maplink)
     place_obj = {
@@ -311,7 +320,7 @@ def build_page(row, slug, base_url):
         "eventStatus": "https://schema.org/EventScheduled",
         "location": place_obj,
         "description": description_e or description_ml,
-        "url": f"{base_url}/kavu_pages/{slug}.html",
+        "url": page_url,
     }
     if image_en or image_ml:
         json_ld["image"] = image_en or image_ml
@@ -427,9 +436,15 @@ def main():
     for row in rows:
         kavu_id = (row.get("kavu_id") or "").strip()
         slug = slug_map.get(kavu_id, slugify(kavu_id or "kavu"))
-        html, name_e, place_e, district_e = build_page(row, slug, base_url)
+
+        html_en, name_e, place_e, district_e = build_page(row, slug, base_url, lang="en")
         with open(os.path.join(OUTPUT_DIR, f"{slug}.html"), "w", encoding="utf-8") as f:
-            f.write(html)
+            f.write(html_en)
+
+        html_ml, _, _, _ = build_page(row, slug, base_url, lang="ml")
+        with open(os.path.join(OUTPUT_DIR, f"{slug}-ml.html"), "w", encoding="utf-8") as f:
+            f.write(html_ml)
+
         entries.append((slug, name_e, place_e, district_e))
 
     with open("sitemap.xml", "w", encoding="utf-8") as f:
@@ -450,7 +465,7 @@ def main():
     # index.html stays as it is, so there's no one-click browsable list of
     # every kavu on the site itself.
 
-    print(f"Generated {len(entries)} pages in ./{OUTPUT_DIR}/")
+    print(f"Generated {len(entries)} kavus x 2 language variants = {len(entries) * 2} pages in ./{OUTPUT_DIR}/")
     print("Also wrote: sitemap.xml, robots.txt, kavu_slugs.json")
     print("\nNext steps:")
     print(f"1. Upload the whole '{OUTPUT_DIR}' folder, sitemap.xml and robots.txt to your site.")
