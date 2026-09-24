@@ -40,6 +40,7 @@ theekuttichathan, Dupli_id_No
 (thirumuttam / thirumuttam_e exist in the sheet but aren't used here.)
 """
 
+import base64
 import csv
 import json
 import os
@@ -47,6 +48,7 @@ import re
 import sys
 from datetime import date
 from html import escape as h
+from io import StringIO
 from xml.sax.saxutils import escape as x
 
 # Your data.csv has at least one very long cell (likely a long description,
@@ -119,9 +121,30 @@ def slugify(text):
     return text.strip("-") or "kavu"
 
 
+def decode_csv_payload(text):
+    """Mirrors the site's client-side decodeCsvPayload(): your data.csv is
+    stored base64-encoded (index.html base64-decodes it before parsing).
+    A plain csv.DictReader on the raw file therefore sees the whole payload
+    as a single unmatched header and reads zero real rows - which is why no
+    kavu_pages/ got generated. Decode it the same way the site does; if it
+    doesn't look like base64-encoded CSV, fall back to using it as-is."""
+    text = (text or "").strip()
+    if not text:
+        return text
+    try:
+        decoded = base64.b64decode(text, validate=False).decode("utf-8")
+        if "kavu_name" in decoded:
+            return decoded
+    except Exception:
+        pass
+    return text
+
+
 def read_rows(csv_path):
     with open(csv_path, encoding="utf-8-sig") as f:
-        return list(csv.DictReader(f))
+        raw = f.read()
+    content = decode_csv_payload(raw)
+    return list(csv.DictReader(StringIO(content)))
 
 
 def is_primary_row(row):
