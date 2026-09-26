@@ -15,7 +15,7 @@ jobs:
         run: |
           curl -L -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
             -o raw_data.csv \
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJ06kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
           echo "----- ആദ്യത്തെ 3 വരികൾ (raw CSV) -----"
           head -n 3 raw_data.csv
           if ! head -c 50 raw_data.csv | grep -qi "kavu_name"; then
@@ -39,3 +39,32 @@ jobs:
           git add data.csv
           git diff --staged --quiet || git commit -m "Auto-sync data.csv from Google Sheet"
           git push
+
+      # ---------------------------------------------------------------
+      # താഴെയുള്ള രണ്ട് steps പുതിയതാണ് (Year_Mapping സിങ്ക് ചെയ്യാൻ വേണ്ടി
+      # ചേർത്തത്). മുകളിലെ data.csv ഭാഗത്തിന് ഇത് ഒരു ബാധകവുമില്ല —
+      # ഇവിടെ എന്തെങ്കിലും പിഴവ് വന്നാലും data.csv സിങ്ക് നിർത്തില്ല.
+      # ---------------------------------------------------------------
+      - name: Download latest Year_Mapping CSV from Google Sheet
+        run: |
+          curl -L -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
+            -o year_mapping_raw.csv \
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1456046618&single=true&output=csv"
+          echo "----- ആദ്യത്തെ 3 വരികൾ (Year_Mapping raw CSV) -----"
+          head -n 3 year_mapping_raw.csv
+          if [ ! -s year_mapping_raw.csv ] || head -c 50 year_mapping_raw.csv | grep -qi "<!DOCTYPE\|<html"; then
+            echo "❌ Year_Mapping CSV ശരിയായി കിട്ടിയില്ല (HTML/error page ആയിരിക്കാം). year_mapping.csv overwrite ചെയ്യുന്നില്ല."
+            rm -f year_mapping_raw.csv
+          else
+            mv year_mapping_raw.csv year_mapping.csv
+          fi
+
+      - name: Commit and push Year_Mapping if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          if [ -f year_mapping.csv ]; then
+            git add year_mapping.csv
+            git diff --staged --quiet || git commit -m "Auto-sync year_mapping.csv from Google Sheet"
+            git push
+          fi
