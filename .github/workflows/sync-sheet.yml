@@ -1,55 +1,8 @@
-name: Sync Google Sheet to data.csv
-on:
-  schedule:
-    - cron: '*/15 * * * *'
-  workflow_dispatch:
-permissions:
-  contents: write
-jobs:
-  sync:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-      - name: Download latest CSV from Google Sheet
-        run: |
-          curl -L -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
-            -o raw_data.csv \
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1199621547&single=true&output=csv"
-          echo "----- ആദ്യത്തെ 3 വരികൾ (raw CSV) -----"
-          head -n 3 raw_data.csv
-          if ! head -c 50 raw_data.csv | grep -qi "kavu_name"; then
-            echo "❌ ഇത് CSV അല്ല (HTML/error page ആയിരിക്കാം). data.csv overwrite ചെയ്യുന്നില്ല."
-            exit 1
-          fi
-      - name: Base64-encode before saving as data.csv
-        run: |
-          # 1500+ കാവുകളുടെ ഡാറ്റ ഒറ്റയടിക്ക് ആരും നേരിട്ട് വായിക്കാതിരിക്കാൻ/ഡൗൺലോഡ്
-          # ചെയ്യാതിരിക്കാൻ, plain CSV അല്ല base64-encoded ടെക്സ്റ്റ് ആണ് data.csv-യിൽ സേവ് ചെയ്യുന്നത്.
-          # (index.html-ലെ JS ഇത് decode ചെയ്ത ശേഷമാണ് കലണ്ടറിൽ കാണിക്കുന്നത്.)
-          base64 -w 0 raw_data.csv > data.csv
-          rm raw_data.csv
-          echo "----- ആദ്യത്തെ 200 അക്ഷരങ്ങൾ (encoded data.csv) -----"
-          head -c 200 data.csv
-          echo ""
-      - name: Commit and push if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data.csv
-          git diff --staged --quiet || git commit -m "Auto-sync data.csv from Google Sheet"
-          git push
-
-      # ---------------------------------------------------------------
-      # താഴെയുള്ള രണ്ട് steps പുതിയതാണ് (Year_Mapping സിങ്ക് ചെയ്യാൻ വേണ്ടി
-      # ചേർത്തത്). മുകളിലെ data.csv ഭാഗത്തിന് ഇത് ഒരു ബാധകവുമില്ല —
-      # ഇവിടെ എന്തെങ്കിലും പിഴവ് വന്നാലും data.csv സിങ്ക് നിർത്തില്ല.
-      # ---------------------------------------------------------------
       - name: Download latest Year_Mapping CSV from Google Sheet
         run: |
           curl -L -sS -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36" \
             -o year_mapping_raw.csv \
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vRbsDUu6WdIssNTVWre5N99TiMBIfIzjEUnyJluR_6h-KJO6kVK7KrXHoh_0A-UF1g6hoWlBX8ERDCp/pub?gid=1456046618&single=true&output=csv"
+            "PASTE_YEAR_MAPPING_LINK_HERE"
           echo "----- ആദ്യത്തെ 3 വരികൾ (Year_Mapping raw CSV) -----"
           head -n 3 year_mapping_raw.csv
           if [ ! -s year_mapping_raw.csv ] || head -c 50 year_mapping_raw.csv | grep -qi "<!DOCTYPE\|<html"; then
