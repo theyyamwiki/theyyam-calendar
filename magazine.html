@@ -74,7 +74,13 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
    date  : "YYYY-MM-DD" ഫോർമാറ്റിൽ (ഏതാണ് പുതിയത് എന്ന്
            കണ്ടെത്താൻ ഉപയോഗിക്കുന്നു)
    cover : കവർ ഫോട്ടോയുടെ നേരിട്ടുള്ള ലിങ്ക് (image URL)
-   link  : e-book / PDF വായിക്കാനുള്ള ലിങ്ക്
+   link  : PDF-ന്റെ ലിങ്ക്. ഇത് ഈ repo-യിൽ തന്നെ upload ചെയ്ത
+           ഫയലിലേക്കുള്ള ഒരു relative path ആയിരിക്കണം, ഉദാ:
+           "magazines/chayilyam-issue1.pdf" - Google Drive ലിങ്ക്
+           ഇവിടെ ഉപയോഗിക്കരുത് (CORS കാരണം flipbook ലോഡ് ആകില്ല).
+           PDF magazines/ എന്ന ഫോൾഡറിൽ ഇട്ടതിനു ശേഷം അതേ പേര്
+           ഇവിടെ എഴുതിയാൽ മതി; ക്ലിക്ക് ചെയ്യുമ്പോൾ ഓട്ടോ ആയി
+           flipbook.html-ൽ 3D page-flip ആയി തുറക്കും.
    ============================================================ */
 const ISSUES = [
   // ഉദാഹരണം (ശരിയായ വിവരങ്ങൾ വെച്ച് മാറ്റുകയോ, ഇതിന് താഴെ
@@ -83,7 +89,7 @@ const ISSUES = [
   //   title: "ചായില്യം ലക്കം 1",
   //   date: "2026-01-15",
   //   cover: "https://example.com/chayilyam-issue1-cover.jpg",
-  //   link: "https://example.com/chayilyam-issue1.pdf"
+  //   link: "magazines/chayilyam-issue1.pdf"
   // },
 ];
 
@@ -113,6 +119,14 @@ const I18N = {
 let currentLang = localStorage.getItem("theyyam_lang") || "en";
 const t = key => I18N[currentLang][key];
 
+function buildFlipbookUrl(issue) {
+  const p = new URLSearchParams();
+  p.set("pdf", issue.link);
+  p.set("title", issue.title);
+  p.set("lang", currentLang);
+  return "flipbook.html?" + p.toString();
+}
+
 function renderMagazine() {
   document.getElementById("htmlRoot").lang = currentLang;
   document.getElementById("pageTitle").textContent = t("pageTitle");
@@ -135,11 +149,11 @@ function renderMagazine() {
   }
 
   const latest = sorted[0];
-  document.getElementById("latestCoverLink").href = latest.link;
+  document.getElementById("latestCoverLink").href = buildFlipbookUrl(latest);
   document.getElementById("latestCoverImg").src = latest.cover;
   document.getElementById("latestCoverImg").alt = latest.title;
   document.getElementById("latestTitleText").textContent = latest.title;
-  document.getElementById("latestReadBtn").href = latest.link;
+  document.getElementById("latestReadBtn").href = buildFlipbookUrl(latest);
 
   const older = sorted.slice(1);
   const rail = document.getElementById("oldIssuesRail");
@@ -150,7 +164,7 @@ function renderMagazine() {
     older.forEach(issue => {
       const a = document.createElement("a");
       a.className = "old-issue-card";
-      a.href = issue.link;
+      a.href = buildFlipbookUrl(issue);
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       a.innerHTML = `<img src="${issue.cover}" alt="${issue.title}"><span class="issue-label">${issue.title}</span>`;
