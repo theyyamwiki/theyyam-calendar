@@ -16,6 +16,8 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-top-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
 .fb-btn{background-color:#d9a441;color:#7a1414;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:.82em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
 .fb-btn:hover{filter:brightness(1.08)}
+.fb-note{background-color:#3a0d0d;color:#e8c98a;font-size:.72em;text-align:center;padding:4px 10px;line-height:1.3}
+.fb-note a{color:#f0d9a0;text-decoration:underline;font-weight:700}
 .fb-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 48px);padding:10px;gap:6px}
 #bookEl{margin:0 auto}
 .fb-nav-btn{background-color:rgba(217,164,65,.92);color:#7a1414;border:none;width:42px;height:42px;border-radius:50%;font-size:1.1em;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
@@ -38,12 +40,15 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 </head>
 <body>
 
-<div class="fb-top">
-  <div class="fb-title" id="fbTitle">ചായില്യം</div>
-  <div class="fb-top-actions">
-    <a class="fb-btn" id="fbDownloadLink" target="_blank" rel="noopener noreferrer"><i class="fas fa-download"></i> <span id="fbDownloadText">PDF</span></a>
-    <a class="fb-btn" id="fbBackLink" href="magazine.html"><i class="fas fa-times"></i> <span id="fbCloseText">അടയ്ക്കുക</span></a>
+<div id="fbHeader">
+  <div class="fb-top">
+    <div class="fb-title" id="fbTitle">ചായില്യം</div>
+    <div class="fb-top-actions">
+      <a class="fb-btn" id="fbDownloadLink" target="_blank" rel="noopener noreferrer"><i class="fas fa-download"></i> <span id="fbDownloadText">PDF</span></a>
+      <a class="fb-btn" id="fbBackLink" href="magazine.html"><i class="fas fa-times"></i> <span id="fbCloseText">അടയ്ക്കുക</span></a>
+    </div>
   </div>
+  <div class="fb-note" id="fbNote"></div>
 </div>
 
 <div class="fb-stage" id="fbStage">
@@ -66,12 +71,16 @@ const I18N = {
         close:"അടയ്ക്കുക", download:"PDF ഡൗൺലോഡ്",
         errorTitle:"മാഗസിൻ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.",
         errorHint:"ദയവായി കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക, അല്ലെങ്കിൽ PDF നേരിട്ട് ഡൗൺലോഡ് ചെയ്യൂ.",
-        noPdf:"PDF ലിങ്ക് ലഭ്യമല്ല." },
+        noPdf:"PDF ലിങ്ക് ലഭ്യമല്ല.",
+        noteText:"ഇത് വേഗത്തിൽ വായിക്കാൻ ചെറുതാക്കിയ ഫയലാണ്. ഒറിജിനൽ ഫയൽ ആവശ്യമെങ്കിൽ",
+        noteLink:"ചായില്യം മാഗസിൻ ടീമിനെ ബന്ധപ്പെടുക" },
   en: { loading:"Loading magazine...", rendering:(a,b)=>`Preparing page ${a} of ${b}...`,
         close:"Close", download:"Download PDF",
         errorTitle:"Could not load the magazine.",
         errorHint:"Please try again in a moment, or download the PDF directly.",
-        noPdf:"No PDF link provided." }
+        noPdf:"No PDF link provided.",
+        noteText:"This is a compressed file for faster reading. For the original file,",
+        noteLink:"contact the Chayilyam magazine team" }
 };
 
 function getParams(){
@@ -96,6 +105,10 @@ document.getElementById("fbDownloadLink").href = params.pdf || "#";
 
 // Preserve language when going back to the magazine list
 document.getElementById("fbBackLink").href = "magazine.html" + (params.lang === "en" ? "?lang=en" : "");
+
+const contactHref = "contact.html" + (params.lang === "en" ? "?lang=en" : "");
+document.getElementById("fbNote").innerHTML =
+  `${t("noteText")} <a href="${contactHref}">${t("noteLink")}</a>`;
 
 const statusEl = document.getElementById("fbStatus");
 const progressEl = document.getElementById("fbProgressText");
@@ -153,7 +166,7 @@ async function renderPdfToImages(url){
 
 function computeBookSize(pageW, pageH){
   const isPortrait = window.innerWidth < 700;
-  const topBarH = document.querySelector(".fb-top").getBoundingClientRect().height;
+  const topBarH = document.getElementById("fbHeader").getBoundingClientRect().height;
   // On mobile the nav arrows overlay the book edges (see CSS), so the book
   // can use almost the full width instead of leaving side gaps for them.
   const sidePad = isPortrait ? 8 : 110;
