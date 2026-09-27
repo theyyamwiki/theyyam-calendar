@@ -1,0 +1,91 @@
+name: Publish Magazine Issue
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf_path:
+        description: 'റിപ്പോയിൽ ഇപ്പോൾ അപ്‌ലോഡ് ചെയ്ത PDF ന്റെ path (ഉദാ: magazines/chayilyam-issue2.pdf)'
+        required: true
+      title:
+        description: 'ലക്കത്തിന്റെ പേര് (ഉദാ: ചായില്യം ലക്കം 2)'
+        required: true
+      date:
+        description: 'തീയതി YYYY-MM-DD (ഒഴിവാക്കിയാൽ ഇന്നത്തെ തീയതി ഉപയോഗിക്കും)'
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PyMuPDF
+        run: pip install pymupdf
+
+      - name: Generate cover image and update issues.json
+        env:
+          PDF_PATH: ${{ inputs.pdf_path }}
+          ISSUE_TITLE: ${{ inputs.title }}
+          ISSUE_DATE: ${{ inputs.date }}
+        run: |
+          python3 << 'PYEOF'
+          import fitz, json, os, datetime
+
+          pdf_path = os.environ["PDF_PATH"].strip()
+          title = os.environ["ISSUE_TITLE"].strip()
+          date = os.environ.get("ISSUE_DATE", "").strip() or datetime.date.today().isoformat()
+
+          if not os.path.exists(pdf_path):
+              raise SystemExit(
+                  f"PDF കണ്ടില്ല: {pdf_path}\n"
+                  f"ദയവായി ആദ്യം PDF ഫയൽ ഈ path-ൽ റിപ്പോയിലേക്ക് commit ചെയ്ത ശേഷം വീണ്ടും ശ്രമിക്കുക."
+              )
+
+          os.makedirs("covers", exist_ok=True)
+          base = os.path.splitext(os.path.basename(pdf_path))[0]
+          cover_path = f"covers/{base}.jpg"
+
+          doc = fitz.open(pdf_path)
+          page = doc.load_page(0)
+          pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+          pix.save(cover_path)
+          doc.close()
+
+          issues_file = "issues.json"
+          issues = []
+          if os.path.exists(issues_file):
+              with open(issues_file, "r", encoding="utf-8") as f:
+                  content = f.read().strip()
+                  issues = json.loads(content) if content else []
+
+          # Same pdf_path re-run replaces the old entry instead of duplicating it
+          issues = [i for i in issues if i.get("link") != pdf_path]
+          issues.append({
+              "title": title,
+              "date": date,
+              "cover": cover_path,
+              "link": pdf_path
+          })
+
+          with open(issues_file, "w", encoding="utf-8") as f:
+              json.dump(issues, f, ensure_ascii=False, indent=2)
+
+          print(f"Added: {title} ({date}) -> {pdf_path}, cover: {cover_path}")
+          PYEOF
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add covers issues.json
+          git diff --cached --quiet || git commit -m "Publish magazine issue: ${{ inputs.title }}"
+          git push
