@@ -1,1 +1,9 @@
-
+[
+  {
+    "title": "2",
+    "date": "2026-09-27",
+    "cover": "covers/trial.jpg",
+    "link": "magazines/trial.pdf",
+    "draft": true
+  }
+]
