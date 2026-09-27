@@ -82,16 +82,7 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
            ഇവിടെ എഴുതിയാൽ മതി; ക്ലിക്ക് ചെയ്യുമ്പോൾ ഓട്ടോ ആയി
            flipbook.html-ൽ 3D page-flip ആയി തുറക്കും.
    ============================================================ */
-const ISSUES = [
-  // ഉദാഹരണം (ശരിയായ വിവരങ്ങൾ വെച്ച് മാറ്റുകയോ, ഇതിന് താഴെ
-  // പുതിയവ കൂട്ടിച്ചേർക്കുകയോ ചെയ്യുക):
-  // {
-  //   title: "ചായില്യം ലക്കം 1",
-  //   date: "2026-01-15",
-  //   cover: "https://example.com/chayilyam-issue1-cover.jpg",
-  //   link: "magazines/chayilyam-issue1.pdf"
-  // },
-];
+let ISSUES = [];
 
 const I18N = {
   ml: {
@@ -176,7 +167,19 @@ function renderMagazine() {
 document.getElementById("langBtnEn").onclick = () => { currentLang = "en"; localStorage.setItem("theyyam_lang", "en"); renderMagazine(); };
 document.getElementById("langBtnMl").onclick = () => { currentLang = "ml"; localStorage.setItem("theyyam_lang", "ml"); renderMagazine(); };
 
-renderMagazine();
+async function loadIssuesAndRender() {
+  try {
+    const res = await fetch("issues.json", { cache: "no-store" });
+    if (res.ok) {
+      ISSUES = await res.json();
+    }
+  } catch (err) {
+    console.error("issues.json load error:", err);
+  }
+  renderMagazine();
+}
+
+loadIssuesAndRender();
 </script>
 </body>
 </html>
