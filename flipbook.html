@@ -146,10 +146,13 @@ async function renderPdfToImages(url){
 }
 
 function computeBookSize(pageW, pageH){
-  const stageW = Math.min(window.innerWidth - 110, 1300);
+  const isPortrait = window.innerWidth < 700;
+  const stageW = Math.min(window.innerWidth - (isPortrait ? 80 : 110), 1300);
   const stageH = window.innerHeight - 100;
   const aspect = pageW / pageH;
-  let w = stageW / 2; // two-page spread
+  // Portrait/mobile shows one page at a time, so it can use the full stage
+  // width; desktop shows a two-page spread, so each page gets half.
+  let w = isPortrait ? stageW : stageW / 2;
   let h = w / aspect;
   if (h > stageH) { h = stageH; w = h * aspect; }
   return { width: Math.floor(w), height: Math.floor(h) };
