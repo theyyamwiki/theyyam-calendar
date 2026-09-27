@@ -12,6 +12,14 @@ on:
       date:
         description: 'തീയതി YYYY-MM-DD (ഒഴിവാക്കിയാൽ ഇന്നത്തെ തീയതി ഉപയോഗിക്കും)'
         required: false
+      draft:
+        description: 'yes ആയാൽ ഈ ലക്കം admin preview-ൽ മാത്രമേ കാണൂ (പബ്ലിക് ആയി കാണില്ല). പിന്നീട് ഇതേ pdf_path വെച്ച് draft=no ആയി വീണ്ടും റൺ ചെയ്താൽ അത് പബ്ലിക് ആയി മാറും.'
+        required: false
+        type: choice
+        default: 'no'
+        options:
+          - 'no'
+          - 'yes'
 
 permissions:
   contents: write
@@ -36,6 +44,7 @@ jobs:
           PDF_PATH: ${{ inputs.pdf_path }}
           ISSUE_TITLE: ${{ inputs.title }}
           ISSUE_DATE: ${{ inputs.date }}
+          ISSUE_DRAFT: ${{ inputs.draft }}
         run: |
           python3 << 'PYEOF'
           import fitz, json, os, datetime
@@ -43,6 +52,7 @@ jobs:
           pdf_path = os.environ["PDF_PATH"].strip()
           title = os.environ["ISSUE_TITLE"].strip()
           date = os.environ.get("ISSUE_DATE", "").strip() or datetime.date.today().isoformat()
+          is_draft = os.environ.get("ISSUE_DRAFT", "no").strip().lower() == "yes"
 
           if not os.path.exists(pdf_path):
               raise SystemExit(
@@ -69,17 +79,21 @@ jobs:
 
           # Same pdf_path re-run replaces the old entry instead of duplicating it
           issues = [i for i in issues if i.get("link") != pdf_path]
-          issues.append({
+          entry = {
               "title": title,
               "date": date,
               "cover": cover_path,
               "link": pdf_path
-          })
+          }
+          if is_draft:
+              entry["draft"] = True
+          issues.append(entry)
 
           with open(issues_file, "w", encoding="utf-8") as f:
               json.dump(issues, f, ensure_ascii=False, indent=2)
 
-          print(f"Added: {title} ({date}) -> {pdf_path}, cover: {cover_path}")
+          status = "DRAFT (admin preview only)" if is_draft else "PUBLIC"
+          print(f"Added [{status}]: {title} ({date}) -> {pdf_path}, cover: {cover_path}")
           PYEOF
 
       - name: Commit and push changes
