@@ -93,7 +93,8 @@ const I18N = {
     readBtn: "ഇ-മാഗസിൻ വായിക്കുക",
     oldIssuesHeading: "പഴയ ലക്കങ്ങൾ",
     noOldIssues: "പഴയ ലക്കങ്ങൾ ഇതുവരെ ഇല്ല.",
-    noIssues: "മാഗസിൻ ലക്കങ്ങൾ ഉടൻ ലഭ്യമാകും."
+    noIssues: "മാഗസിൻ ലക്കങ്ങൾ ഉടൻ ലഭ്യമാകും.",
+    draftLabel: " (ഡ്രാഫ്റ്റ് — പബ്ലിക് ആയിട്ടില്ല)"
   },
   en: {
     pageTitle: "Theyyam Magazine: Chayilyam | Theyyam Calendar",
@@ -103,9 +104,14 @@ const I18N = {
     readBtn: "Read E-Magazine",
     oldIssuesHeading: "Older Issues",
     noOldIssues: "No older issues yet.",
-    noIssues: "Magazine issues will be available soon."
+    noIssues: "Magazine issues will be available soon.",
+    draftLabel: " (Draft — not public yet)"
   }
 };
+
+function isAdminMode() {
+  return new URLSearchParams(window.location.search).get("admin") === "1";
+}
 
 let currentLang = localStorage.getItem("theyyam_lang") || "en";
 const t = key => I18N[currentLang][key];
@@ -130,7 +136,9 @@ function renderMagazine() {
   document.getElementById("langBtnMl").classList.toggle("active", currentLang === "ml");
   document.getElementById("langBtnEn").classList.toggle("active", currentLang === "en");
 
-  const sorted = [...ISSUES].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const adminMode = isAdminMode();
+  const visible = ISSUES.filter(issue => adminMode || !issue.draft);
+  const sorted = [...visible].sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const latestSection = document.querySelector(".latest-issue");
   if (sorted.length === 0) {
@@ -143,7 +151,7 @@ function renderMagazine() {
   document.getElementById("latestCoverLink").href = buildFlipbookUrl(latest);
   document.getElementById("latestCoverImg").src = latest.cover;
   document.getElementById("latestCoverImg").alt = latest.title;
-  document.getElementById("latestTitleText").textContent = latest.title;
+  document.getElementById("latestTitleText").textContent = latest.title + (latest.draft ? t("draftLabel") : "");
   document.getElementById("latestReadBtn").href = buildFlipbookUrl(latest);
 
   const older = sorted.slice(1);
@@ -158,7 +166,8 @@ function renderMagazine() {
       a.href = buildFlipbookUrl(issue);
       a.target = "_blank";
       a.rel = "noopener noreferrer";
-      a.innerHTML = `<img src="${issue.cover}" alt="${issue.title}"><span class="issue-label">${issue.title}</span>`;
+      const label = issue.title + (issue.draft ? t("draftLabel") : "");
+      a.innerHTML = `<img src="${issue.cover}" alt="${issue.title}"><span class="issue-label">${label}</span>`;
       rail.appendChild(a);
     });
   }
