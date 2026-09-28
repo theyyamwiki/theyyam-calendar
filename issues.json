@@ -33,5 +33,12 @@
     "cover": "covers/KeralaCalling_July2021.jpg",
     "link": "magazines/KeralaCalling_July2021.pdf",
     "draft": true
+  },
+  {
+    "title": "6",
+    "date": "2026-09-28",
+    "cover": "covers/345.jpg",
+    "link": "magazines/345.pdf",
+    "draft": true
   }
 ]
