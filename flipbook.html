@@ -10,7 +10,7 @@
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box}
-body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#f2e3c6;color:#333;font-size:.95em;overscroll-behavior:none}
+body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#ffffff;color:#333;font-size:.95em;overscroll-behavior:none}
 .fb-top{background-color:#8f1414;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .fb-title{color:#fff;font-weight:700;font-size:1em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .fb-top-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
@@ -22,7 +22,7 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 #bookEl{margin:0 auto}
 .fb-nav-btn{background-color:rgba(217,164,65,.92);color:#7a1414;border:none;width:42px;height:42px;border-radius:50%;font-size:1.1em;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .fb-nav-btn:disabled{opacity:.35;cursor:default}
-.fb-status{position:fixed;top:0;left:0;width:100%;height:100%;background:#f2e3c6;color:#7a1414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
+.fb-status{position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;color:#7a1414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
 .fb-spinner{width:44px;height:44px;border:4px solid rgba(122,20,20,.18);border-top-color:#8f1414;border-radius:50%;animation:fbspin .8s linear infinite}
 @keyframes fbspin{to{transform:rotate(360deg)}}
 .fb-progress{font-size:.85em;color:#8f1414}
@@ -85,8 +85,11 @@ const I18N = {
 
 function getParams(){
   const p = new URLSearchParams(window.location.search);
+  const pdf = p.get("pdf") || "";
   return {
-    pdf: p.get("pdf") || "",
+    pdf: pdf,
+    download: p.get("download") || pdf,
+    hasSeparateDownload: !!p.get("download") && p.get("download") !== pdf,
     title: p.get("title") || "ചായില്യം",
     lang: p.get("lang") === "en" ? "en" : "ml"
   };
@@ -101,14 +104,20 @@ document.title = params.title + " | Theyyam Calendar";
 document.getElementById("fbCloseText").textContent = t("close");
 document.getElementById("fbDownloadText").textContent = t("download");
 document.getElementById("fbStatusText").textContent = t("loading");
-document.getElementById("fbDownloadLink").href = params.pdf || "#";
+document.getElementById("fbDownloadLink").href = params.download || "#";
 
 // Preserve language when going back to the magazine list
 document.getElementById("fbBackLink").href = "magazine.html" + (params.lang === "en" ? "?lang=en" : "");
 
-const contactHref = "contact.html" + (params.lang === "en" ? "?lang=en" : "");
-document.getElementById("fbNote").innerHTML =
-  `${t("noteText")} <a href="${contactHref}">${t("noteLink")}</a>`;
+if (params.hasSeparateDownload) {
+  // A real original-quality file is directly downloadable, so the
+  // "contact us for the original" note isn't needed for this issue.
+  document.getElementById("fbNote").style.display = "none";
+} else {
+  const contactHref = "contact.html" + (params.lang === "en" ? "?lang=en" : "");
+  document.getElementById("fbNote").innerHTML =
+    `${t("noteText")} <a href="${contactHref}">${t("noteLink")}</a>`;
+}
 
 const statusEl = document.getElementById("fbStatus");
 const progressEl = document.getElementById("fbProgressText");
@@ -123,7 +132,7 @@ function showError(msg){
       <div style="font-size:2em;margin-bottom:8px;">⚠️</div>
       <div style="font-weight:700;margin-bottom:6px;">${t("errorTitle")}</div>
       <div style="font-size:.85em;opacity:.85;margin-bottom:10px;">${t("errorHint")}</div>
-      ${params.pdf ? `<a href="${params.pdf}" target="_blank" rel="noopener noreferrer">${t("download")}</a>` : ""}
+      ${params.download ? `<a href="${params.download}" target="_blank" rel="noopener noreferrer">${t("download")}</a>` : ""}
       ${msg ? `<div style="font-size:.7em;opacity:.5;margin-top:14px;">${msg}</div>` : ""}
     </div>`;
 }
