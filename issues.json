@@ -19,5 +19,12 @@
     "cover": "covers/spcial.jpg",
     "link": "magazines/spcial.pdf",
     "draft": true
+  },
+  {
+    "title": "1",
+    "date": "28",
+    "cover": "covers/chayilyam-issueT1.jpg",
+    "link": "magazines/chayilyam-issueT1.pdf",
+    "draft": true
   }
 ]
