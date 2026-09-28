@@ -26,5 +26,12 @@
     "cover": "covers/chayilyam-issueT1.jpg",
     "link": "magazines/chayilyam-issueT1.pdf",
     "draft": true
+  },
+  {
+    "title": "2",
+    "date": "2026-09-28",
+    "cover": "covers/KeralaCalling_July2021.jpg",
+    "link": "magazines/KeralaCalling_July2021.pdf",
+    "draft": true
   }
 ]
