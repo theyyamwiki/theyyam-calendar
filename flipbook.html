@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box}
-body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#1a1410;color:#333;font-size:.95em;overscroll-behavior:none}
+body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#ffffff;color:#333;font-size:.95em;overscroll-behavior:none}
 .fb-top{background-color:#8f1414;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .fb-title{color:#fff;font-weight:700;font-size:1em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .fb-top-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
@@ -18,7 +18,7 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-note{background-color:#3a0d0d;color:#e8c98a;font-size:.72em;text-align:center;padding:4px 10px;line-height:1.3}
 .fb-note a{color:#f0d9a0;text-decoration:underline;font-weight:700}
 .fb-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 48px);padding:10px;gap:6px}
-#bookEl{margin:0 auto}
+#bookEl{margin:0 auto;box-shadow:0 0 0 1px #e3d9c8,0 2px 12px rgba(0,0,0,.12)}
 .page{background:#fff;overflow:hidden}
 .page img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
 .fb-nav-btn{background-color:rgba(217,164,65,.92);color:#7a1414;border:none;width:42px;height:42px;border-radius:50%;font-size:1.1em;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
@@ -27,7 +27,7 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-spinner{width:44px;height:44px;border:4px solid rgba(122,20,20,.18);border-top-color:#8f1414;border-radius:50%;animation:fbspin .8s linear infinite}
 @keyframes fbspin{to{transform:rotate(360deg)}}
 .fb-progress{font-size:.85em;color:#8f1414}
-.fb-pagecount{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.16);color:#fff;padding:4px 12px;border-radius:14px;font-size:.75em;z-index:20}
+.fb-pagecount{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(122,20,20,.88);color:#fff;padding:4px 12px;border-radius:14px;font-size:.75em;z-index:20}
 .fb-error{max-width:420px;line-height:1.6}
 .fb-error a{color:#8f1414}
 @media (max-width:700px){
