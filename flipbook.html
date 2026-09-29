@@ -18,25 +18,25 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-note{background-color:#3a0d0d;color:#e8c98a;font-size:.72em;text-align:center;padding:4px 10px;line-height:1.3}
 .fb-note a{color:#f0d9a0;text-decoration:underline;font-weight:700}
 .fb-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 48px);padding:10px;gap:6px}
-#bookEl{margin:0 auto;box-shadow:0 0 0 1px #e3d9c8,0 2px 12px rgba(0,0,0,.12)}
+#bookEl{margin:0 auto}
 .page{background:#fff;overflow:hidden}
 .page img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
-.fb-nav-btn{background-color:rgba(217,164,65,.92);color:#7a1414;border:none;width:42px;height:42px;border-radius:50%;font-size:1.1em;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
-.fb-nav-btn:disabled{opacity:.35;cursor:default}
+.fb-topnav{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.fb-btn:disabled{opacity:.35;cursor:default;filter:none}
+.fb-pagecount{color:#fff;font-weight:700;font-size:.85em;min-width:44px;text-align:center;white-space:nowrap}
 .fb-status{position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;color:#7a1414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
 .fb-spinner{width:44px;height:44px;border:4px solid rgba(122,20,20,.18);border-top-color:#8f1414;border-radius:50%;animation:fbspin .8s linear infinite}
 @keyframes fbspin{to{transform:rotate(360deg)}}
 .fb-progress{font-size:.85em;color:#8f1414}
-.fb-pagecount{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(122,20,20,.88);color:#fff;padding:4px 12px;border-radius:14px;font-size:.75em;z-index:20}
 .fb-error{max-width:420px;line-height:1.6}
 .fb-error a{color:#8f1414}
 @media (max-width:700px){
   .fb-title{font-size:.85em}
   .fb-top{padding:6px 10px}
   .fb-stage{padding:4px 2px;gap:0}
-  .fb-nav-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:15;width:34px;height:34px;font-size:.9em}
-  #fbPrevBtn{left:2px}
-  #fbNextBtn{right:2px}
+  .fb-top-actions{gap:5px}
+  .fb-topnav{gap:4px}
+  .fb-btn{padding:7px 9px}
 }
 </style>
 </head>
@@ -45,6 +45,11 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 <div id="fbHeader">
   <div class="fb-top">
     <div class="fb-title" id="fbTitle">ചായില്യം</div>
+    <div class="fb-topnav">
+      <button class="fb-btn" id="fbPrevBtn" type="button" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+      <div class="fb-pagecount" id="fbPageCount"></div>
+      <button class="fb-btn" id="fbNextBtn" type="button" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+    </div>
     <div class="fb-top-actions">
       <a class="fb-btn" id="fbDownloadLink" target="_blank" rel="noopener noreferrer"><i class="fas fa-download"></i> <span id="fbDownloadText">PDF</span></a>
       <button class="fb-btn" id="fbFullBtn" type="button" aria-label="Fullscreen"><i class="fas fa-expand"></i></button>
@@ -54,12 +59,8 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 </div>
 
 <div class="fb-stage" id="fbStage">
-  <button class="fb-nav-btn" id="fbPrevBtn" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
   <div id="bookEl"></div>
-  <button class="fb-nav-btn" id="fbNextBtn" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
 </div>
-
-<div class="fb-pagecount" id="fbPageCount" style="display:none"></div>
 
 <div class="fb-status" id="fbStatus">
   <div class="fb-spinner"></div>
@@ -181,7 +182,7 @@ function computeBookSize(pageW, pageH){
   const topBarH = document.getElementById("fbHeader").getBoundingClientRect().height;
   // On mobile the nav arrows overlay the book edges (see CSS), so the book
   // can use almost the full width instead of leaving side gaps for them.
-  const sidePad = isPortrait ? 8 : 110;
+  const sidePad = isPortrait ? 8 : 30;
   const bottomPad = isPortrait ? 6 : 24;
   const stageW = Math.min(window.innerWidth - sidePad, 1300);
   const stageH = window.innerHeight - topBarH - bottomPad;
@@ -279,7 +280,7 @@ async function init(){
       if (old) old.remove();
       const bookEl = document.createElement("div");
       bookEl.id = "bookEl";
-      stageEl.insertBefore(bookEl, nextBtn);
+      stageEl.appendChild(bookEl);
 
       const size = computeBookSize(width, height);
 
@@ -331,8 +332,7 @@ async function init(){
     }
 
     build(startPage);
-    pageCountEl.style.display = "block";
-
+    
     prevBtn.onclick = () => pageFlip.flipPrev();
     nextBtn.onclick = () => pageFlip.flipNext();
     document.addEventListener("keydown", (e) => {
