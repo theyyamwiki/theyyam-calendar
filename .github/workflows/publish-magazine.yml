@@ -52,7 +52,7 @@ jobs:
           ISSUE_DRAFT: ${{ inputs.draft }}
         run: |
           python3 << 'PYEOF'
-          import json, os, datetime, urllib.request, urllib.parse
+          import json, os, re, datetime, urllib.request, urllib.parse
 
           ia = os.environ["IA_ID"].strip()
           title = os.environ["ISSUE_TITLE"].strip()
@@ -79,7 +79,23 @@ jobs:
                   f"ID ശരിയാണോ എന്നും upload പൂർത്തിയായോ എന്നും നോക്കുക."
               )
 
-          pages = to_int(os.environ.get("ISSUE_PAGES", "")) or to_int(meta["metadata"].get("imagecount"))
+          # item-ൽ 1.jpg, 2.jpg ... ഉണ്ടോ? (പുതിയ രീതി)
+          jpg_nums = set()
+          for f in meta.get("files", []):
+              m = re.fullmatch(r"(\d+)\.jpg", f.get("name", ""), re.I)
+              if m and f.get("source") == "original":
+                  jpg_nums.add(int(m.group(1)))
+          jpg_count = 0
+          while (jpg_count + 1) in jpg_nums:
+              jpg_count += 1
+          if jpg_nums and jpg_count == 0:
+              raise SystemExit("JPG ഫയലുകൾ 1.jpg, 2.jpg, 3.jpg ... എന്ന പേരിൽ വേണം (1-ൽ തുടങ്ങണം).")
+          fmt = "jpg" if jpg_count else ""
+
+          if fmt == "jpg":
+              pages = jpg_count
+          else:
+              pages = to_int(os.environ.get("ISSUE_PAGES", "")) or to_int(meta["metadata"].get("imagecount"))
 
           # ഒറിജിനൽ PDF-ന്റെ ഡൗൺലോഡ് ലിങ്ക് (കണ്ടാൽ)
           download = ""
@@ -107,6 +123,8 @@ jobs:
           entry = {"title": title, "date": date, "ia": ia}
           if pages:
               entry["pages"] = pages
+          if fmt:
+              entry["fmt"] = fmt
           if download:
               entry["download"] = download
           if is_draft:
@@ -117,7 +135,7 @@ jobs:
               json.dump(issues, f, ensure_ascii=False, indent=2)
 
           status = "DRAFT (admin preview only)" if is_draft else "PUBLIC"
-          print(f"Added [{status}]: {title} ({date}) ia={ia} pages={pages or 'auto'} download={'yes' if download else 'no'}")
+          print(f"Added [{status}]: {title} ({date}) ia={ia} fmt={fmt or 'pdf-derived'} pages={pages or 'auto'} download={'yes' if download else 'no'}")
           PYEOF
 
       - name: Commit and push changes
