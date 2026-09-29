@@ -93,6 +93,7 @@ function getParams(){
     pdf: pdf,
     ia: ia,
     pages: parseInt(p.get("pages") || "0", 10),
+    fmt: p.get("fmt") || "",
     w: p.get("w") || "800",
     download: dl,
     hasSeparateDownload: !!p.get("download") && p.get("download") !== pdf,
@@ -231,13 +232,34 @@ async function getIaTotal(id){
   return 0;
 }
 
+// item-ലെ 1.jpg, 2.jpg ... എന്നിവ എണ്ണുന്നു (pages കൊടുത്തിട്ടില്ലെങ്കിൽ)
+async function getIaJpgCount(id){
+  try {
+    const r = await fetch("https://archive.org/metadata/" + encodeURIComponent(id));
+    const d = await r.json();
+    const names = new Set((d.files || []).map(f => f.name));
+    let n = 0;
+    while (names.has((n + 1) + ".jpg")) n++;
+    return n;
+  } catch (e) { return 0; }
+}
+
 async function init(){
   if (!params.ia && !params.pdf) { showError(t("noPdf")); return; }
   try {
     let srcs, total, width, height, lazy = false;
 
-    if (params.ia) {
-      // New way: page images straight from archive.org (no PDF on GitHub)
+    if (params.ia && params.fmt === "jpg") {
+      // Newest way: our own JPG pages (1.jpg, 2.jpg ...) uploaded to archive.org - no waiting for processing
+      total = params.pages > 0 ? params.pages : await getIaJpgCount(params.ia);
+      if (!total) throw new Error("Page images not found. Files must be named 1.jpg, 2.jpg, ...");
+      const jpg = i => `https://archive.org/download/${encodeURIComponent(params.ia)}/${i + 1}.jpg`;
+      const first = await loadImage(jpg(0));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => jpg(i));
+      lazy = true;
+    } else if (params.ia) {
+      // Older way: archive.org builds page images from a PDF (slow to process)
       total = await getIaTotal(params.ia);
       if (!total) throw new Error("Page count not found. Add &pages=43 to the URL.");
       const first = await loadImage(iaImg(params.ia, 0, params.w));

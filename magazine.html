@@ -128,6 +128,7 @@ function buildFlipbookUrl(issue) {
   if (issue.ia) {
     p.set("ia", issue.ia);
     if (issue.pages) p.set("pages", issue.pages);
+    if (issue.fmt) p.set("fmt", issue.fmt);
     if (issue.download) p.set("download", issue.download);
   } else {
     p.set("pdf", issue.link);
@@ -137,9 +138,13 @@ function buildFlipbookUrl(issue) {
   return "flipbook.html?" + p.toString();
 }
 
-function coverOf(issue) {
+function coverOf(issue, small) {
   if (issue.cover) return issue.cover;
-  if (issue.ia) return "https://archive.org/download/" + encodeURIComponent(issue.ia) + "/page/n0_w400.jpg";
+  if (issue.ia) {
+    const base = "https://archive.org/download/" + encodeURIComponent(issue.ia) + "/";
+    if (issue.fmt === "jpg") return base + (small ? "__ia_thumb.jpg" : "1.jpg");
+    return base + "page/n0_w400.jpg";
+  }
   return "";
 }
 
@@ -186,7 +191,7 @@ function renderMagazine() {
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       const label = issue.title + (issue.draft ? t("draftLabel") : "");
-      a.innerHTML = `<img src="${coverOf(issue)}" alt="${issue.title}"><span class="issue-label">${label}</span>`;
+      a.innerHTML = `<img src="${coverOf(issue, true)}" alt="${issue.title}"><span class="issue-label">${label}</span>`;
       rail.appendChild(a);
     });
   }
