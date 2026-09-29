@@ -9,7 +9,7 @@
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box}
-body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#ffffff;color:#333;font-size:.95em;overscroll-behavior:none}
+body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#1a1410;color:#333;font-size:.95em;overscroll-behavior:none}
 .fb-top{background-color:#8f1414;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .fb-title{color:#fff;font-weight:700;font-size:1em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .fb-top-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
@@ -27,11 +27,12 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-spinner{width:44px;height:44px;border:4px solid rgba(122,20,20,.18);border-top-color:#8f1414;border-radius:50%;animation:fbspin .8s linear infinite}
 @keyframes fbspin{to{transform:rotate(360deg)}}
 .fb-progress{font-size:.85em;color:#8f1414}
-.fb-pagecount{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.55);color:#fff;padding:4px 12px;border-radius:14px;font-size:.75em;z-index:20}
+.fb-pagecount{position:fixed;bottom:6px;left:50%;transform:translateX(-50%);background:rgba(255,255,255,.16);color:#fff;padding:4px 12px;border-radius:14px;font-size:.75em;z-index:20}
 .fb-error{max-width:420px;line-height:1.6}
 .fb-error a{color:#8f1414}
 @media (max-width:700px){
   .fb-title{font-size:.85em}
+  .fb-top{padding:6px 10px}
   .fb-stage{padding:4px 2px;gap:0}
   .fb-nav-btn{position:absolute;top:50%;transform:translateY(-50%);z-index:15;width:34px;height:34px;font-size:.9em}
   #fbPrevBtn{left:2px}
@@ -46,10 +47,10 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
     <div class="fb-title" id="fbTitle">ചായില്യം</div>
     <div class="fb-top-actions">
       <a class="fb-btn" id="fbDownloadLink" target="_blank" rel="noopener noreferrer"><i class="fas fa-download"></i> <span id="fbDownloadText">PDF</span></a>
+      <button class="fb-btn" id="fbFullBtn" type="button" aria-label="Fullscreen"><i class="fas fa-expand"></i></button>
       <a class="fb-btn" id="fbBackLink" href="magazine.html"><i class="fas fa-times"></i> <span id="fbCloseText">അടയ്ക്കുക</span></a>
     </div>
   </div>
-  <div class="fb-note" id="fbNote"></div>
 </div>
 
 <div class="fb-stage" id="fbStage">
@@ -116,14 +117,9 @@ document.getElementById("fbDownloadLink").href = params.download || "#";
 // Preserve language when going back to the magazine list
 document.getElementById("fbBackLink").href = "magazine.html" + (params.lang === "en" ? "?lang=en" : "");
 
-if (params.hasSeparateDownload) {
-  // A real original-quality file is directly downloadable, so the
-  // "contact us for the original" note isn't needed for this issue.
-  document.getElementById("fbNote").style.display = "none";
-} else {
-  const contactHref = "contact.html" + (params.lang === "en" ? "?lang=en" : "");
-  document.getElementById("fbNote").innerHTML =
-    `${t("noteText")} <a href="${contactHref}">${t("noteLink")}</a>`;
+// archive.org-ലെ ചിത്ര ലക്കങ്ങൾക്ക്, നേരിട്ടുള്ള PDF ലിങ്ക് ഇല്ലെങ്കിൽ ഡൗൺലോഡ് ബട്ടൺ മറയ്ക്കുന്നു
+if (params.ia && !params.hasSeparateDownload) {
+  document.getElementById("fbDownloadLink").style.display = "none";
 }
 
 const statusEl = document.getElementById("fbStatus");
@@ -274,57 +270,68 @@ async function init(){
     }
     if (!srcs.length) { showError(); return; }
 
-    const size = computeBookSize(width, height);
-    const bookEl = document.getElementById("bookEl");
+    const startPage = Math.max(0, Math.min(total - 1,
+      parseInt(new URLSearchParams(location.search).get("page") || "1", 10) - 1));
 
-    const imgEls = srcs.map((s, i) => {
-      const d = document.createElement("div");
-      d.className = "page";
-      const im = document.createElement("img");
-      im.alt = (params.lang === "en" ? "Page " : "പേജ് ") + (i + 1);
-      im.draggable = false;
-      if (!lazy) im.src = s;
-      d.appendChild(im);
-      bookEl.appendChild(d);
-      return im;
-    });
+    // പുസ്തകം (പുതിയ വലിപ്പത്തിൽ) വീണ്ടും ഉണ്ടാക്കാൻ ഉപയോഗിക്കുന്നു
+    function build(startIdx){
+      const old = document.getElementById("bookEl");
+      if (old) old.remove();
+      const bookEl = document.createElement("div");
+      bookEl.id = "bookEl";
+      stageEl.insertBefore(bookEl, nextBtn);
 
-    // Load only the pages near the reader (saves data on phones)
-    function loadNear(n){
-      if (!lazy) return;
-      for (let i = Math.max(0, n - 3); i <= Math.min(total - 1, n + 5); i++) {
-        if (!imgEls[i].getAttribute("src")) imgEls[i].src = srcs[i];
+      const size = computeBookSize(width, height);
+
+      const imgEls = srcs.map((s, i) => {
+        const d = document.createElement("div");
+        d.className = "page";
+        const im = document.createElement("img");
+        im.alt = (params.lang === "en" ? "Page " : "പേജ് ") + (i + 1);
+        im.draggable = false;
+        if (!lazy) im.src = s;
+        d.appendChild(im);
+        bookEl.appendChild(d);
+        return im;
+      });
+
+      // Load only the pages near the reader (saves data on phones)
+      function loadNear(n){
+        if (!lazy) return;
+        for (let i = Math.max(0, n - 3); i <= Math.min(total - 1, n + 5); i++) {
+          if (!imgEls[i].getAttribute("src")) imgEls[i].src = srcs[i];
+        }
       }
+      loadNear(startIdx);
+
+      pageFlip = new St.PageFlip(bookEl, {
+        width: size.width,
+        height: size.height,
+        size: "fixed",
+        minWidth: 200,
+        maxWidth: 1400,
+        minHeight: 250,
+        maxHeight: 1800,
+        showCover: true,
+        usePortrait: window.innerWidth < 700,
+        maxShadowOpacity: 0.5,
+        mobileScrollSupport: true,
+        swipeDistance: 20
+      });
+      pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
+      if (startIdx > 0) pageFlip.turnToPage(startIdx);
+
+      const showPos = (n) => {
+        pageCountEl.textContent = `${n + 1} / ${total}`;
+        prevBtn.disabled = n === 0;
+        nextBtn.disabled = n >= total - 1;
+      };
+      pageFlip.on("flip", (e) => { showPos(e.data); loadNear(e.data); });
+      showPos(startIdx);
     }
-    loadNear(0);
 
-    pageFlip = new St.PageFlip(bookEl, {
-      width: size.width,
-      height: size.height,
-      size: "fixed",
-      minWidth: 200,
-      maxWidth: 1400,
-      minHeight: 250,
-      maxHeight: 1800,
-      showCover: true,
-      usePortrait: window.innerWidth < 700,
-      maxShadowOpacity: 0.5,
-      mobileScrollSupport: true,
-      swipeDistance: 20
-    });
-    pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
-
-    pageFlip.on("flip", (e) => {
-      pageCountEl.textContent = `${e.data + 1} / ${total}`;
-      prevBtn.disabled = e.data === 0;
-      nextBtn.disabled = e.data >= total - 1;
-      loadNear(e.data);
-    });
-
+    build(startPage);
     pageCountEl.style.display = "block";
-    pageCountEl.textContent = `1 / ${total}`;
-    prevBtn.disabled = true;
-    nextBtn.disabled = total <= 1;
 
     prevBtn.onclick = () => pageFlip.flipPrev();
     nextBtn.onclick = () => pageFlip.flipNext();
@@ -333,18 +340,36 @@ async function init(){
       if (e.key === "ArrowRight") pageFlip.flipNext();
     });
 
+    // സ്ക്രീൻ തിരിക്കുമ്പോഴോ പൂർണ്ണ സ്ക്രീൻ ആകുമ്പോഴോ പേജ് വലിപ്പം പുതുക്കുന്നു
+    let lastW = window.innerWidth, lastH = window.innerHeight, rt = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        if (Math.abs(window.innerWidth - lastW) < 40 && Math.abs(window.innerHeight - lastH) < 100) return;
+        lastW = window.innerWidth; lastH = window.innerHeight;
+        const cur = pageFlip.getCurrentPageIndex();
+        try { pageFlip.destroy(); } catch (e) {}
+        build(cur);
+      }, 350);
+    });
+
+    // പൂർണ്ണ സ്ക്രീൻ ബട്ടൺ (iPhone Safari പിന്തുണയ്ക്കില്ല, അവിടെ ബട്ടൺ മറയ്ക്കും)
+    const fullBtn = document.getElementById("fbFullBtn");
+    if (!document.documentElement.requestFullscreen) {
+      fullBtn.style.display = "none";
+    } else {
+      fullBtn.onclick = () => {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen().catch(() => {});
+      };
+    }
+
     statusEl.style.display = "none";
   } catch (err) {
     console.error("Flipbook load error:", err);
     showError(err && err.message ? err.message : "");
   }
 }
-
-window.addEventListener("resize", () => {
-  // PageFlip handles internal responsiveness for "stretch" size mode;
-  // for "fixed" mode we keep the initial size, which is simplest and
-  // avoids destroying/rebuilding the book on every resize.
-});
 
 init();
 </script>
