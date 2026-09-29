@@ -74,7 +74,14 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
    date  : "YYYY-MM-DD" ഫോർമാറ്റിൽ (ഏതാണ് പുതിയത് എന്ന്
            കണ്ടെത്താൻ ഉപയോഗിക്കുന്നു)
    cover : കവർ ഫോട്ടോയുടെ നേരിട്ടുള്ള ലിങ്ക് (image URL)
-   link  : PDF-ന്റെ ലിങ്ക്. ഇത് ഈ repo-യിൽ തന്നെ upload ചെയ്ത
+   ia    : (പുതിയ രീതി - ശുപാർശ) archive.org-ലെ item ID, ഉദാ:
+           "m-2026091615". ഇത് കൊടുത്താൽ PDF GitHub-ൽ വേണ്ട;
+           പേജുകൾ archive.org-ൽ നിന്ന് നേരിട്ട് flipbook-ൽ വരും.
+   pages : (ഓപ്ഷണൽ) ആകെ പേജ് എണ്ണം, ഉദാ: 43. കൊടുത്തില്ലെങ്കിൽ
+           archive.org-ൽ നിന്ന് തനിയെ എടുക്കും.
+   download : (ഓപ്ഷണൽ) PDF ഡൗൺലോഡ് ലിങ്ക്.
+   cover : ഇല്ലെങ്കിൽ, ia ഉണ്ടെങ്കിൽ, ആദ്യ പേജ് കവർ ആയി എടുക്കും.
+   link  : (പഴയ രീതി - ia ഇല്ലാത്ത ലക്കങ്ങൾക്ക്) PDF-ന്റെ ലിങ്ക്. ഇത് ഈ repo-യിൽ തന്നെ upload ചെയ്ത
            ഫയലിലേക്കുള്ള ഒരു relative path ആയിരിക്കണം, ഉദാ:
            "magazines/chayilyam-issue1.pdf" - Google Drive ലിങ്ക്
            ഇവിടെ ഉപയോഗിക്കരുത് (CORS കാരണം flipbook ലോഡ് ആകില്ല).
@@ -118,10 +125,22 @@ const t = key => I18N[currentLang][key];
 
 function buildFlipbookUrl(issue) {
   const p = new URLSearchParams();
-  p.set("pdf", issue.link);
+  if (issue.ia) {
+    p.set("ia", issue.ia);
+    if (issue.pages) p.set("pages", issue.pages);
+    if (issue.download) p.set("download", issue.download);
+  } else {
+    p.set("pdf", issue.link);
+  }
   p.set("title", issue.title);
   p.set("lang", currentLang);
   return "flipbook.html?" + p.toString();
+}
+
+function coverOf(issue) {
+  if (issue.cover) return issue.cover;
+  if (issue.ia) return "https://archive.org/download/" + encodeURIComponent(issue.ia) + "/page/n0_w400.jpg";
+  return "";
 }
 
 function renderMagazine() {
@@ -149,7 +168,7 @@ function renderMagazine() {
 
   const latest = sorted[0];
   document.getElementById("latestCoverLink").href = buildFlipbookUrl(latest);
-  document.getElementById("latestCoverImg").src = latest.cover;
+  document.getElementById("latestCoverImg").src = coverOf(latest);
   document.getElementById("latestCoverImg").alt = latest.title;
   document.getElementById("latestTitleText").textContent = latest.title + (latest.draft ? t("draftLabel") : "");
   document.getElementById("latestReadBtn").href = buildFlipbookUrl(latest);
@@ -167,7 +186,7 @@ function renderMagazine() {
       a.target = "_blank";
       a.rel = "noopener noreferrer";
       const label = issue.title + (issue.draft ? t("draftLabel") : "");
-      a.innerHTML = `<img src="${issue.cover}" alt="${issue.title}"><span class="issue-label">${label}</span>`;
+      a.innerHTML = `<img src="${coverOf(issue)}" alt="${issue.title}"><span class="issue-label">${label}</span>`;
       rail.appendChild(a);
     });
   }

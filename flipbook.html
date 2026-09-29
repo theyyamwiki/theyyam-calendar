@@ -6,7 +6,6 @@
 <title id="pageTitle">ചായില്യം | Theyyam Calendar</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=fallback">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
 <style>
 *{box-sizing:border-box}
@@ -20,6 +19,8 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .fb-note a{color:#f0d9a0;text-decoration:underline;font-weight:700}
 .fb-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 48px);padding:10px;gap:6px}
 #bookEl{margin:0 auto}
+.page{background:#fff;overflow:hidden}
+.page img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
 .fb-nav-btn{background-color:rgba(217,164,65,.92);color:#7a1414;border:none;width:42px;height:42px;border-radius:50%;font-size:1.1em;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.3)}
 .fb-nav-btn:disabled{opacity:.35;cursor:default}
 .fb-status{position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;color:#7a1414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
@@ -86,9 +87,14 @@ const I18N = {
 function getParams(){
   const p = new URLSearchParams(window.location.search);
   const pdf = p.get("pdf") || "";
+  const ia = p.get("ia") || "";
+  const dl = p.get("download") || (ia ? "https://archive.org/details/" + encodeURIComponent(ia) : pdf);
   return {
     pdf: pdf,
-    download: p.get("download") || pdf,
+    ia: ia,
+    pages: parseInt(p.get("pages") || "0", 10),
+    w: p.get("w") || "800",
+    download: dl,
     hasSeparateDownload: !!p.get("download") && p.get("download") !== pdf,
     title: p.get("title") || "ചായില്യം",
     lang: p.get("lang") === "en" ? "en" : "ml"
@@ -194,14 +200,81 @@ function computeBookSize(pageW, pageH){
 
 let pageFlip = null;
 
-async function init(){
-  if (!params.pdf) { showError(t("noPdf")); return; }
+const iaImg = (id, i, w) => `https://archive.org/download/${encodeURIComponent(id)}/page/n${i}_w${w}.jpg`;
+
+function loadImage(src){
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("Image load failed"));
+    im.src = src;
+  });
+}
+
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error("Script load failed"));
+    document.head.appendChild(s);
+  });
+}
+
+async function getIaTotal(id){
+  if (params.pages > 0) return params.pages;
   try {
-    const { images, width, height, total } = await renderPdfToImages(params.pdf);
-    if (!images.length) { showError(); return; }
+    const r = await fetch("https://archive.org/metadata/" + encodeURIComponent(id));
+    const d = await r.json();
+    const n = parseInt(d && d.metadata && d.metadata.imagecount, 10);
+    if (n > 0) return n;
+  } catch (e) {}
+  return 0;
+}
+
+async function init(){
+  if (!params.ia && !params.pdf) { showError(t("noPdf")); return; }
+  try {
+    let srcs, total, width, height, lazy = false;
+
+    if (params.ia) {
+      // New way: page images straight from archive.org (no PDF on GitHub)
+      total = await getIaTotal(params.ia);
+      if (!total) throw new Error("Page count not found. Add &pages=43 to the URL.");
+      const first = await loadImage(iaImg(params.ia, 0, params.w));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => iaImg(params.ia, i, params.w));
+      lazy = true;
+    } else {
+      // Old way: PDF stored in this repo, rendered with pdf.js
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+      const r = await renderPdfToImages(params.pdf);
+      srcs = r.images; total = r.total; width = r.width; height = r.height;
+    }
+    if (!srcs.length) { showError(); return; }
 
     const size = computeBookSize(width, height);
     const bookEl = document.getElementById("bookEl");
+
+    const imgEls = srcs.map((s, i) => {
+      const d = document.createElement("div");
+      d.className = "page";
+      const im = document.createElement("img");
+      im.alt = (params.lang === "en" ? "Page " : "പേജ് ") + (i + 1);
+      im.draggable = false;
+      if (!lazy) im.src = s;
+      d.appendChild(im);
+      bookEl.appendChild(d);
+      return im;
+    });
+
+    // Load only the pages near the reader (saves data on phones)
+    function loadNear(n){
+      if (!lazy) return;
+      for (let i = Math.max(0, n - 3); i <= Math.min(total - 1, n + 5); i++) {
+        if (!imgEls[i].getAttribute("src")) imgEls[i].src = srcs[i];
+      }
+    }
+    loadNear(0);
 
     pageFlip = new St.PageFlip(bookEl, {
       width: size.width,
@@ -217,12 +290,13 @@ async function init(){
       mobileScrollSupport: true,
       swipeDistance: 20
     });
-    pageFlip.loadFromImages(images);
+    pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
 
     pageFlip.on("flip", (e) => {
       pageCountEl.textContent = `${e.data + 1} / ${total}`;
       prevBtn.disabled = e.data === 0;
       nextBtn.disabled = e.data >= total - 1;
+      loadNear(e.data);
     });
 
     pageCountEl.style.display = "block";
