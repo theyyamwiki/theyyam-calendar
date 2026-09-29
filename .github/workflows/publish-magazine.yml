@@ -3,8 +3,8 @@ name: Publish Magazine Issue
 on:
   workflow_dispatch:
     inputs:
-      pdf_path:
-        description: 'റിപ്പോയിൽ ഇപ്പോൾ അപ്‌ലോഡ് ചെയ്ത PDF ന്റെ path (ഉദാ: magazines/chayilyam-issue2.pdf)'
+      ia_id:
+        description: 'archive.org-ലെ item ID (ഉദാ: m-2026091615). PDF ആദ്യം archive.org-ൽ upload ചെയ്യുക.'
         required: true
       title:
         description: 'ലക്കത്തിന്റെ പേര് (ഉദാ: ചായില്യം ലക്കം 2)'
@@ -12,8 +12,14 @@ on:
       date:
         description: 'തീയതി YYYY-MM-DD (ഒഴിവാക്കിയാൽ ഇന്നത്തെ തീയതി ഉപയോഗിക്കും)'
         required: false
+      pages:
+        description: 'ആകെ പേജ് എണ്ണം (ഒഴിവാക്കിയാൽ archive.org-ൽ നിന്ന് തനിയെ എടുക്കും)'
+        required: false
+      download_url:
+        description: 'PDF ഡൗൺലോഡ് ലിങ്ക് (ഓപ്ഷണൽ). പ്രിന്റ്/A4 PDF വേറെ ഉണ്ടെങ്കിൽ അതിന്റെ https ലിങ്ക് ഇവിടെ കൊടുക്കുക. ഒഴിവാക്കിയാൽ ഈ item-ലെ PDF തന്നെ ഉപയോഗിക്കും.'
+        required: false
       draft:
-        description: 'yes ആയാൽ ഈ ലക്കം admin preview-ൽ മാത്രമേ കാണൂ (പബ്ലിക് ആയി കാണില്ല). പിന്നീട് ഇതേ pdf_path വെച്ച് draft=no ആയി വീണ്ടും റൺ ചെയ്താൽ അത് പബ്ലിക് ആയി മാറും.'
+        description: 'yes ആയാൽ ഈ ലക്കം admin preview-ൽ മാത്രമേ കാണൂ (പബ്ലിക് ആയി കാണില്ല). പിന്നീട് ഇതേ ia_id വെച്ച് draft=no ആയി വീണ്ടും റൺ ചെയ്താൽ അത് പബ്ലിക് ആയി മാറും.'
         required: false
         type: choice
         default: 'no'
@@ -36,39 +42,58 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install PyMuPDF
-        run: pip install pymupdf
-
-      - name: Generate cover image and update issues.json
+      - name: Update issues.json from archive.org item
         env:
-          PDF_PATH: ${{ inputs.pdf_path }}
+          IA_ID: ${{ inputs.ia_id }}
           ISSUE_TITLE: ${{ inputs.title }}
           ISSUE_DATE: ${{ inputs.date }}
+          ISSUE_PAGES: ${{ inputs.pages }}
+          ISSUE_DOWNLOAD: ${{ inputs.download_url }}
           ISSUE_DRAFT: ${{ inputs.draft }}
         run: |
           python3 << 'PYEOF'
-          import fitz, json, os, datetime
+          import json, os, datetime, urllib.request, urllib.parse
 
-          pdf_path = os.environ["PDF_PATH"].strip()
+          ia = os.environ["IA_ID"].strip()
           title = os.environ["ISSUE_TITLE"].strip()
           date = os.environ.get("ISSUE_DATE", "").strip() or datetime.date.today().isoformat()
           is_draft = os.environ.get("ISSUE_DRAFT", "no").strip().lower() == "yes"
 
-          if not os.path.exists(pdf_path):
+          def to_int(v):
+              try:
+                  return int(str(v).strip())
+              except Exception:
+                  return 0
+
+          # archive.org-ൽ item ഉണ്ടോ എന്ന് പരിശോധിക്കുന്നു
+          url = "https://archive.org/metadata/" + urllib.parse.quote(ia)
+          try:
+              with urllib.request.urlopen(url, timeout=30) as r:
+                  meta = json.load(r)
+          except Exception as e:
+              raise SystemExit(f"archive.org-ൽ നിന്ന് വിവരം എടുക്കാൻ കഴിഞ്ഞില്ല: {e}")
+
+          if not meta.get("metadata"):
               raise SystemExit(
-                  f"PDF കണ്ടില്ല: {pdf_path}\n"
-                  f"ദയവായി ആദ്യം PDF ഫയൽ ഈ path-ൽ റിപ്പോയിലേക്ക് commit ചെയ്ത ശേഷം വീണ്ടും ശ്രമിക്കുക."
+                  f"archive.org-ൽ '{ia}' എന്ന item കണ്ടില്ല.\n"
+                  f"ID ശരിയാണോ എന്നും upload പൂർത്തിയായോ എന്നും നോക്കുക."
               )
 
-          os.makedirs("covers", exist_ok=True)
-          base = os.path.splitext(os.path.basename(pdf_path))[0]
-          cover_path = f"covers/{base}.jpg"
+          pages = to_int(os.environ.get("ISSUE_PAGES", "")) or to_int(meta["metadata"].get("imagecount"))
 
-          doc = fitz.open(pdf_path)
-          page = doc.load_page(0)
-          pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
-          pix.save(cover_path)
-          doc.close()
+          # ഒറിജിനൽ PDF-ന്റെ ഡൗൺലോഡ് ലിങ്ക് (കണ്ടാൽ)
+          download = ""
+          for f in meta.get("files", []):
+              name = f.get("name", "")
+              if name.lower().endswith(".pdf") and f.get("source") == "original":
+                  download = f"https://archive.org/download/{ia}/{urllib.parse.quote(name)}"
+                  break
+
+          override = os.environ.get("ISSUE_DOWNLOAD", "").strip()
+          if override:
+              if not override.startswith("https://"):
+                  raise SystemExit("download_url https:// ൽ തുടങ്ങണം.")
+              download = override
 
           issues_file = "issues.json"
           issues = []
@@ -77,14 +102,13 @@ jobs:
                   content = f.read().strip()
                   issues = json.loads(content) if content else []
 
-          # Same pdf_path re-run replaces the old entry instead of duplicating it
-          issues = [i for i in issues if i.get("link") != pdf_path]
-          entry = {
-              "title": title,
-              "date": date,
-              "cover": cover_path,
-              "link": pdf_path
-          }
+          # ഇതേ ia_id വീണ്ടും റൺ ചെയ്താൽ പഴയ എൻട്രി മാറ്റി പുതിയത് വരും
+          issues = [i for i in issues if i.get("ia") != ia]
+          entry = {"title": title, "date": date, "ia": ia}
+          if pages:
+              entry["pages"] = pages
+          if download:
+              entry["download"] = download
           if is_draft:
               entry["draft"] = True
           issues.append(entry)
@@ -93,13 +117,13 @@ jobs:
               json.dump(issues, f, ensure_ascii=False, indent=2)
 
           status = "DRAFT (admin preview only)" if is_draft else "PUBLIC"
-          print(f"Added [{status}]: {title} ({date}) -> {pdf_path}, cover: {cover_path}")
+          print(f"Added [{status}]: {title} ({date}) ia={ia} pages={pages or 'auto'} download={'yes' if download else 'no'}")
           PYEOF
 
       - name: Commit and push changes
         run: |
           git config user.name "github-actions[bot]"
+          git add issues.json
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add covers issues.json
           git diff --cached --quiet || git commit -m "Publish magazine issue: ${{ inputs.title }}"
           git push
