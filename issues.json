@@ -6,5 +6,13 @@
     "pages": 4,
     "fmt": "jpg",
     "draft": true
+  },
+  {
+    "title": "cha1",
+    "date": "2026-09-30",
+    "ia": "cha-2026-09-30-is201",
+    "pages": 5,
+    "fmt": "jpg",
+    "draft": true
   }
 ]
