@@ -14,5 +14,13 @@
     "pages": 5,
     "fmt": "jpg",
     "draft": true
+  },
+  {
+    "title": "200",
+    "date": "2026-10-02",
+    "dir": "magazines/puthiya-bhgavathi-1",
+    "pages": 6,
+    "download": "https://archive.org/download/puthiya-bhgavathi-1/puthiya%20bhgavathi%20%281%29.pdf",
+    "draft": true
   }
 ]
