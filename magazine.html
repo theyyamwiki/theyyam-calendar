@@ -125,7 +125,11 @@ const t = key => I18N[currentLang][key];
 
 function buildFlipbookUrl(issue) {
   const p = new URLSearchParams();
-  if (issue.ia) {
+  if (issue.dir) {
+    p.set("dir", issue.dir);
+    if (issue.pages) p.set("pages", issue.pages);
+    if (issue.download) p.set("download", issue.download);
+  } else if (issue.ia) {
     p.set("ia", issue.ia);
     if (issue.pages) p.set("pages", issue.pages);
     if (issue.fmt) p.set("fmt", issue.fmt);
@@ -140,6 +144,7 @@ function buildFlipbookUrl(issue) {
 
 function coverOf(issue, small) {
   if (issue.cover) return issue.cover;
+  if (issue.dir) return issue.dir + "/cover.jpg";
   if (issue.ia) {
     const base = "https://archive.org/download/" + encodeURIComponent(issue.ia) + "/";
     if (issue.fmt === "jpg") return base + (small ? "__ia_thumb.jpg" : "1.jpg");

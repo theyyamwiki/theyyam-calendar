@@ -90,10 +90,12 @@ function getParams(){
   const p = new URLSearchParams(window.location.search);
   const pdf = p.get("pdf") || "";
   const ia = p.get("ia") || "";
+  const dir = p.get("dir") || "";
   const dl = p.get("download") || (ia ? "https://archive.org/details/" + encodeURIComponent(ia) : pdf);
   return {
     pdf: pdf,
     ia: ia,
+    dir: dir,
     pages: parseInt(p.get("pages") || "0", 10),
     fmt: p.get("fmt") || "",
     w: p.get("w") || "800",
@@ -242,11 +244,20 @@ async function getIaJpgCount(id){
 }
 
 async function init(){
-  if (!params.ia && !params.pdf) { showError(t("noPdf")); return; }
+  if (!params.dir && !params.ia && !params.pdf) { showError(t("noPdf")); return; }
   try {
     let srcs, total, width, height, lazy = false;
 
-    if (params.ia && params.fmt === "jpg") {
+    if (params.dir) {
+      // PDF-ൽ നിന്ന് GitHub Action ഉണ്ടാക്കിയ പേജ് ചിത്രങ്ങൾ (magazines/<name>/1.jpg, 2.jpg ...) - ഈ സൈറ്റിൽ നിന്നുതന്നെ
+      if (!(params.pages > 0)) throw new Error("Page count missing (pages=)");
+      total = params.pages;
+      const jpg = i => `${params.dir}/${i + 1}.jpg`;
+      const first = await loadImage(jpg(0));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => jpg(i));
+      lazy = true;
+    } else if (params.ia && params.fmt === "jpg") {
       // Newest way: our own JPG pages (1.jpg, 2.jpg ...) uploaded to archive.org - no waiting for processing
       total = params.pages > 0 ? params.pages : await getIaJpgCount(params.ia);
       if (!total) throw new Error("Page images not found. Files must be named 1.jpg, 2.jpg, ...");

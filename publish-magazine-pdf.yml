@@ -1,0 +1,132 @@
+name: Publish Magazine Issue (PDF)
+
+on:
+  workflow_dispatch:
+    inputs:
+      pdf:
+        description: 'PDF — repo-ലെ path (ഉദാ: magazines/issue2.pdf) അല്ലെങ്കിൽ https ലിങ്ക് (ഉദാ: archive.org-ലെ PDF ലിങ്ക്)'
+        required: true
+      title:
+        description: 'ലക്കത്തിന്റെ പേര് (ഉദാ: ചായില്യം ലക്കം 2)'
+        required: true
+      date:
+        description: 'തീയതി YYYY-MM-DD (ഒഴിവാക്കിയാൽ ഇന്നത്തെ തീയതി)'
+        required: false
+      draft:
+        description: 'yes ആയാൽ admin preview-ൽ മാത്രം കാണും. പിന്നീട് ഇതേ PDF വെച്ച് draft=no ആയി വീണ്ടും റൺ ചെയ്താൽ പബ്ലിക് ആകും.'
+        required: false
+        type: choice
+        default: 'no'
+        options:
+          - 'no'
+          - 'yes'
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install poppler (PDF to image)
+        run: sudo apt-get update && sudo apt-get install -y poppler-utils
+
+      - name: Convert PDF to page images and update issues.json
+        env:
+          PDF_SRC: ${{ inputs.pdf }}
+          ISSUE_TITLE: ${{ inputs.title }}
+          ISSUE_DATE: ${{ inputs.date }}
+          ISSUE_DRAFT: ${{ inputs.draft }}
+        run: |
+          python3 << 'PYEOF'
+          import json, os, re, glob, shutil, subprocess, datetime, urllib.request, urllib.parse
+
+          src = os.environ["PDF_SRC"].strip()
+          title = os.environ["ISSUE_TITLE"].strip()
+          date = os.environ.get("ISSUE_DATE", "").strip() or datetime.date.today().isoformat()
+          is_draft = os.environ.get("ISSUE_DRAFT", "no").strip().lower() == "yes"
+
+          # 1) PDF എടുക്കുന്നു (https ലിങ്ക് അല്ലെങ്കിൽ repo-ലെ ഫയൽ)
+          if src.startswith("https://"):
+              name = urllib.parse.unquote(os.path.basename(urllib.parse.urlparse(src).path)) or "issue.pdf"
+              local = "/tmp/source.pdf"
+              req = urllib.request.Request(src, headers={"User-Agent": "Mozilla/5.0"})
+              try:
+                  with urllib.request.urlopen(req, timeout=300) as r, open(local, "wb") as f:
+                      shutil.copyfileobj(r, f)
+              except Exception as e:
+                  raise SystemExit(f"PDF ഡൗൺലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല: {e}")
+              download = src
+          elif os.path.exists(src):
+              local = src
+              name = os.path.basename(src)
+              download = src
+          else:
+              raise SystemExit(f"'{src}' കണ്ടില്ല. repo-ലെ path (ഉദാ: magazines/issue2.pdf) അല്ലെങ്കിൽ https ലിങ്ക് കൊടുക്കുക.")
+
+          with open(local, "rb") as f:
+              if f.read(5) != b"%PDF-":
+                  raise SystemExit("ഇത് ഒരു PDF ഫയൽ അല്ല (ലിങ്ക് നേരിട്ടുള്ള PDF ഡൗൺലോഡ് ലിങ്ക് ആണോ എന്ന് നോക്കുക).")
+
+          # 2) ഫോൾഡറിന്റെ പേര് (PDF ഫയൽ പേരിൽ നിന്ന്)
+          stem = os.path.splitext(name)[0]
+          slug = re.sub(r"[^a-z0-9]+", "-", stem.lower()).strip("-") or ("issue-" + date)
+          outdir = f"magazines/{slug}"
+          if os.path.isdir(outdir):
+              shutil.rmtree(outdir)
+          os.makedirs(outdir)
+
+          # 3) എല്ലാ പേജുകളും JPG ആക്കുന്നു (വീതി 1600px (A-സീരീസ് അനുപാതം തനിയെ നിലനിൽക്കും))
+          subprocess.run(["pdftoppm", "-jpeg", "-jpegopt", "quality=80",
+                          "-scale-to-x", "1600", "-scale-to-y", "-1",
+                          local, f"{outdir}/p"], check=True)
+          files = sorted(glob.glob(f"{outdir}/p-*.jpg"),
+                         key=lambda x: int(re.search(r"p-(\d+)\.jpg$", x).group(1)))
+          if not files:
+              raise SystemExit("PDF-ൽ നിന്ന് പേജുകൾ ഉണ്ടാക്കാൻ കഴിഞ്ഞില്ല.")
+          for i, fpath in enumerate(files, 1):
+              os.rename(fpath, f"{outdir}/{i}.jpg")
+          pages = len(files)
+
+          # 4) ചെറിയ cover ചിത്രം (ലിസ്റ്റ് പേജിന്)
+          subprocess.run(["pdftoppm", "-jpeg", "-jpegopt", "quality=80", "-f", "1", "-l", "1",
+                          "-scale-to-x", "500", "-scale-to-y", "-1", "-singlefile",
+                          local, f"{outdir}/cover"], check=True)
+
+          # 5) issues.json പുതുക്കുന്നു
+          issues_file = "issues.json"
+          issues = []
+          if os.path.exists(issues_file):
+              with open(issues_file, "r", encoding="utf-8") as f:
+                  content = f.read().strip()
+                  issues = json.loads(content) if content else []
+
+          # ഇതേ ഫോൾഡർ വീണ്ടും റൺ ചെയ്താൽ പഴയ എൻട്രി മാറ്റി പുതിയത് വരും
+          issues = [i for i in issues if i.get("dir") != outdir]
+          entry = {"title": title, "date": date, "dir": outdir, "pages": pages, "download": download}
+          if is_draft:
+              entry["draft"] = True
+          issues.append(entry)
+
+          with open(issues_file, "w", encoding="utf-8") as f:
+              json.dump(issues, f, ensure_ascii=False, indent=2)
+
+          status = "DRAFT (admin preview only)" if is_draft else "PUBLIC"
+          print(f"Added [{status}]: {title} ({date}) dir={outdir} pages={pages}")
+          PYEOF
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add issues.json magazines
+          git diff --cached --quiet || git commit -m "Publish magazine issue: ${{ inputs.title }}"
+          git push
