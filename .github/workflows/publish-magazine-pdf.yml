@@ -145,9 +145,11 @@ jobs:
           PYEOF
 
       - name: Commit and push changes
+        env:
+          ISSUE_TITLE: ${{ inputs.title }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add issues.json magazines
-          git diff --cached --quiet || git commit -m "Publish magazine issue: ${{ inputs.title }}"
+          git diff --cached --quiet || git commit -m "Publish magazine issue: ${ISSUE_TITLE}"
           git push
