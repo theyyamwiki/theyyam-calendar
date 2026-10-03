@@ -31,6 +31,13 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .old-issue-card:hover img{transform:scale(1.05);border-color:#c62828}
 .old-issue-card .issue-label{display:block;margin-top:6px;font-size:.75em;font-weight:700;color:#7a1414}
 .no-old-issues{color:#888;font-size:.9em;padding:10px 4px}
+.dl-section{margin-top:22px;background:#fff3e0;border:1px solid #e6c98a;border-radius:12px;padding:14px 16px}
+.dl-heading{color:#7a1414;font-size:1.05em;margin:0 0 10px 0;padding-left:4px;border-left:4px solid #7a1414}
+.dl-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 2px;border-bottom:1px dashed #e0c48a}
+.dl-row:last-child{border-bottom:none}
+.dl-name{font-weight:700;color:#7a1414;font-size:.9em;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.dl-btn{flex-shrink:0;background-color:#7a1414;color:gold;padding:7px 14px;border-radius:6px;text-decoration:none;font-weight:700;font-size:.8em}
+.dl-btn:hover{background-color:#941a1a}
 .footer-note{text-align:center;margin-top:20px;color:#666;font-size:.85em}
 </style>
 </head>
@@ -57,6 +64,11 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 
   <h3 class="old-issues-heading" id="oldIssuesHeading"></h3>
   <div class="old-issues-rail" id="oldIssuesRail"></div>
+
+  <div class="dl-section" id="dlSection" style="display:none">
+    <h3 class="dl-heading" id="dlHeading"></h3>
+    <div id="dlList"></div>
+  </div>
 
   <div class="footer-note">Theyyam Calendar — ചായില്യം</div>
 </div>
@@ -99,6 +111,8 @@ const I18N = {
     latestHeading: "ഏറ്റവും പുതിയ ലക്കം",
     readBtn: "ഇ-മാഗസിൻ വായിക്കുക",
     oldIssuesHeading: "പഴയ ലക്കങ്ങൾ",
+    dlHeading: "PDF ഡൗൺലോഡ്",
+    dlBtn: "ഡൗൺലോഡ്",
     noOldIssues: "പഴയ ലക്കങ്ങൾ ഇതുവരെ ഇല്ല.",
     noIssues: "മാഗസിൻ ലക്കങ്ങൾ ഉടൻ ലഭ്യമാകും.",
     draftLabel: " (ഡ്രാഫ്റ്റ് — പബ്ലിക് ആയിട്ടില്ല)"
@@ -110,6 +124,8 @@ const I18N = {
     latestHeading: "Latest Issue",
     readBtn: "Read E-Magazine",
     oldIssuesHeading: "Older Issues",
+    dlHeading: "Download PDF",
+    dlBtn: "Download",
     noOldIssues: "No older issues yet.",
     noIssues: "Magazine issues will be available soon.",
     draftLabel: " (Draft — not public yet)"
@@ -168,6 +184,30 @@ function renderMagazine() {
   const adminMode = isAdminMode();
   const visible = ISSUES.filter(issue => adminMode || !issue.draft);
   const sorted = [...visible].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  // PDF ഡൗൺലോഡ് സെക്ഷൻ: download ലിങ്ക് ഉള്ള എല്ലാ ലക്കങ്ങളും (പുതിയത് ആദ്യം)
+  const dlIssues = sorted.filter(i => i.download && /^https?:\/\//.test(i.download));
+  const dlSection = document.getElementById("dlSection");
+  const dlList = document.getElementById("dlList");
+  document.getElementById("dlHeading").textContent = t("dlHeading");
+  dlList.innerHTML = "";
+  dlSection.style.display = dlIssues.length ? "" : "none";
+  dlIssues.forEach(issue => {
+    const row = document.createElement("div");
+    row.className = "dl-row";
+    const name = document.createElement("span");
+    name.className = "dl-name";
+    name.textContent = issue.title + (issue.draft ? t("draftLabel") : "");
+    const a = document.createElement("a");
+    a.className = "dl-btn";
+    a.href = issue.download;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.innerHTML = '<i class="fas fa-download"></i> ' + t("dlBtn");
+    row.appendChild(name);
+    row.appendChild(a);
+    dlList.appendChild(row);
+  });
 
   const latestSection = document.querySelector(".latest-issue");
   if (sorted.length === 0) {
