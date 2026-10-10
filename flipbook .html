@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="ml" id="htmlRoot">
+<head>
+<meta charset="UTF-8">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-CL4N4448LS"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-CL4N4448LS');
+</script>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title id="pageTitle">ചായില്യം | Theyyam Calendar</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=fallback">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/page-flip@2.0.7/dist/js/page-flip.browser.js"></script>
+<style>
+*{box-sizing:border-box}
+body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;background-color:#8f1414;color:#333;font-size:.95em;overscroll-behavior:none}
+.fb-top{background-color:#8f1414;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.fb-title{color:#fff;font-weight:700;font-size:1em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.fb-top-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.fb-btn{background-color:#d9a441;color:#7a1414;border:none;padding:7px 12px;border-radius:6px;font-weight:700;font-size:.82em;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.fb-btn:hover{filter:brightness(1.08)}
+.fb-note{background-color:#3a0d0d;color:#e8c98a;font-size:.72em;text-align:center;padding:4px 10px;line-height:1.3}
+.fb-note a{color:#f0d9a0;text-decoration:underline;font-weight:700}
+.fb-stage{position:relative;display:flex;align-items:center;justify-content:center;min-height:calc(100vh - 48px);padding:10px;gap:6px}
+#bookEl{margin:0 auto}
+.page{background:#fff;overflow:hidden}
+.page img{width:100%;height:100%;object-fit:contain;display:block;user-select:none;-webkit-user-drag:none}
+.fb-topnav{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.fb-btn:disabled{opacity:.35;cursor:default;filter:none}
+.fb-pagecount{color:#fff;font-weight:700;font-size:.85em;min-width:44px;text-align:center;white-space:nowrap}
+.fb-status{position:fixed;top:0;left:0;width:100%;height:100%;background:#ffffff;color:#7a1414;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:50;text-align:center;padding:20px}
+.fb-spinner{width:44px;height:44px;border:4px solid rgba(122,20,20,.18);border-top-color:#8f1414;border-radius:50%;animation:fbspin .8s linear infinite}
+@keyframes fbspin{to{transform:rotate(360deg)}}
+.fb-progress{font-size:.85em;color:#8f1414}
+.fb-error{max-width:420px;line-height:1.6}
+.fb-error a{color:#8f1414}
+@media (max-width:700px){
+  .fb-title{font-size:.85em}
+  .fb-top{padding:6px 10px}
+  .fb-stage{padding:4px 2px;gap:0}
+  .fb-top-actions{gap:5px}
+  .fb-topnav{gap:4px}
+  .fb-btn{padding:7px 9px}
+}
+</style>
+</head>
+<body>
+
+<div id="fbHeader">
+  <div class="fb-top">
+    <div class="fb-title" id="fbTitle">ചായില്യം</div>
+    <div class="fb-topnav">
+      <button class="fb-btn" id="fbPrevBtn" type="button" aria-label="Previous"><i class="fas fa-chevron-left"></i></button>
+      <div class="fb-pagecount" id="fbPageCount"></div>
+      <button class="fb-btn" id="fbNextBtn" type="button" aria-label="Next"><i class="fas fa-chevron-right"></i></button>
+    </div>
+    <div class="fb-top-actions">
+      <a class="fb-btn" id="fbDownloadLink" target="_blank" rel="noopener noreferrer"><i class="fas fa-download"></i> <span id="fbDownloadText">PDF</span></a>
+      <button class="fb-btn" id="fbFullBtn" type="button" aria-label="Fullscreen"><i class="fas fa-expand"></i></button>
+      <a class="fb-btn" id="fbBackLink" href="magazine.html"><i class="fas fa-times"></i> <span id="fbCloseText">അടയ്ക്കുക</span></a>
+    </div>
+  </div>
+</div>
+
+<div class="fb-stage" id="fbStage">
+  <div id="bookEl"></div>
+</div>
+
+<div class="fb-status" id="fbStatus">
+  <div class="fb-spinner"></div>
+  <div id="fbStatusText">മാഗസിൻ ലോഡ് ചെയ്യുന്നു...</div>
+  <div class="fb-progress" id="fbProgressText"></div>
+</div>
+
+<script>
+const I18N = {
+  ml: { loading:"മാഗസിൻ ലോഡ് ചെയ്യുന്നു...", rendering:(a,b)=>`പേജ് ${a} / ${b} തയ്യാറാക്കുന്നു...`,
+        close:"അടയ്ക്കുക", download:"PDF ഡൗൺലോഡ്",
+        errorTitle:"മാഗസിൻ ലോഡ് ചെയ്യാൻ കഴിഞ്ഞില്ല.",
+        errorHint:"ദയവായി കുറച്ച് കഴിഞ്ഞ് വീണ്ടും ശ്രമിക്കുക, അല്ലെങ്കിൽ PDF നേരിട്ട് ഡൗൺലോഡ് ചെയ്യൂ.",
+        noPdf:"PDF ലിങ്ക് ലഭ്യമല്ല.",
+        noteText:"ഇത് വേഗത്തിൽ വായിക്കാൻ ചെറുതാക്കിയ ഫയലാണ്. ഒറിജിനൽ ഫയൽ ആവശ്യമെങ്കിൽ",
+        noteLink:"ചായില്യം മാഗസിൻ ടീമിനെ ബന്ധപ്പെടുക" },
+  en: { loading:"Loading magazine...", rendering:(a,b)=>`Preparing page ${a} of ${b}...`,
+        close:"Close", download:"Download PDF",
+        errorTitle:"Could not load the magazine.",
+        errorHint:"Please try again in a moment, or download the PDF directly.",
+        noPdf:"No PDF link provided.",
+        noteText:"This is a compressed file for faster reading. For the original file,",
+        noteLink:"contact the Chayilyam magazine team" }
+};
+
+function getParams(){
+  const p = new URLSearchParams(window.location.search);
+  const pdf = p.get("pdf") || "";
+  const ia = p.get("ia") || "";
+  const dir = p.get("dir") || "";
+  const dl = p.get("download") || (ia ? "https://archive.org/details/" + encodeURIComponent(ia) : pdf);
+  return {
+    pdf: pdf,
+    ia: ia,
+    dir: dir,
+    pages: parseInt(p.get("pages") || "0", 10),
+    fmt: p.get("fmt") || "",
+    w: p.get("w") || "800",
+    download: dl,
+    hasSeparateDownload: !!p.get("download") && p.get("download") !== pdf,
+    title: p.get("title") || "ചായില്യം",
+    lang: p.get("lang") === "en" ? "en" : "ml"
+  };
+}
+
+const params = getParams();
+const t = (key) => I18N[params.lang][key];
+
+document.getElementById("htmlRoot").lang = params.lang;
+document.getElementById("fbTitle").textContent = params.title;
+document.title = params.title + " | Theyyam Calendar";
+document.getElementById("fbCloseText").textContent = t("close");
+document.getElementById("fbDownloadText").textContent = t("download");
+document.getElementById("fbStatusText").textContent = t("loading");
+document.getElementById("fbDownloadLink").href = params.download || "#";
+
+// Preserve language when going back to the magazine list
+document.getElementById("fbBackLink").href = "magazine.html" + (params.lang === "en" ? "?lang=en" : "");
+
+// archive.org-ലെ ചിത്ര ലക്കങ്ങൾക്ക്, നേരിട്ടുള്ള PDF ലിങ്ക് ഇല്ലെങ്കിൽ ഡൗൺലോഡ് ബട്ടൺ മറയ്ക്കുന്നു
+if (params.ia && !params.hasSeparateDownload) {
+  document.getElementById("fbDownloadLink").style.display = "none";
+}
+
+const statusEl = document.getElementById("fbStatus");
+const progressEl = document.getElementById("fbProgressText");
+const stageEl = document.getElementById("fbStage");
+const pageCountEl = document.getElementById("fbPageCount");
+const prevBtn = document.getElementById("fbPrevBtn");
+const nextBtn = document.getElementById("fbNextBtn");
+
+function showError(msg){
+  statusEl.innerHTML = `
+    <div class="fb-error">
+      <div style="font-size:2em;margin-bottom:8px;">⚠️</div>
+      <div style="font-weight:700;margin-bottom:6px;">${t("errorTitle")}</div>
+      <div style="font-size:.85em;opacity:.85;margin-bottom:10px;">${t("errorHint")}</div>
+      ${params.download ? `<a href="${params.download}" target="_blank" rel="noopener noreferrer">${t("download")}</a>` : ""}
+      ${msg ? `<div style="font-size:.7em;opacity:.5;margin-top:14px;">${msg}</div>` : ""}
+    </div>`;
+}
+
+async function renderPdfToImages(url){
+  pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+  const loadingTask = pdfjsLib.getDocument(url);
+  const pdf = await loadingTask.promise;
+  const total = pdf.numPages;
+  const images = [];
+  let maxW = 0, maxH = 0;
+
+  // Render at a resolution good enough for crisp text on most screens,
+  // capped so very large/high-page-count magazines don't exhaust memory.
+  const targetWidth = 1300;
+
+  for (let i = 1; i <= total; i++) {
+    progressEl.textContent = t("rendering")(i, total);
+    const page = await pdf.getPage(i);
+    const baseViewport = page.getViewport({ scale: 1 });
+    const scale = targetWidth / baseViewport.width;
+    const viewport = page.getViewport({ scale });
+
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.ceil(viewport.width);
+    canvas.height = Math.ceil(viewport.height);
+    const ctx = canvas.getContext("2d");
+    await page.render({ canvasContext: ctx, viewport }).promise;
+
+    maxW = Math.max(maxW, canvas.width);
+    maxH = Math.max(maxH, canvas.height);
+    images.push(canvas.toDataURL("image/jpeg", 0.82));
+
+    // Free the page's resources as soon as we're done with it.
+    page.cleanup();
+  }
+
+  return { images, width: maxW, height: maxH, total };
+}
+
+function computeBookSize(pageW, pageH){
+  const isPortrait = window.innerWidth < 700;
+  const topBarH = document.getElementById("fbHeader").getBoundingClientRect().height;
+  // On mobile the nav arrows overlay the book edges (see CSS), so the book
+  // can use almost the full width instead of leaving side gaps for them.
+  const sidePad = isPortrait ? 8 : 30;
+  const bottomPad = isPortrait ? 6 : 24;
+  const stageW = Math.min(window.innerWidth - sidePad, 1300);
+  const stageH = window.innerHeight - topBarH - bottomPad;
+  const aspect = pageW / pageH;
+  // Portrait/mobile shows one page at a time, so it can use the full stage
+  // width; desktop shows a two-page spread, so each page gets half.
+  let w = isPortrait ? stageW : stageW / 2;
+  let h = w / aspect;
+  if (h > stageH) { h = stageH; w = h * aspect; }
+  stageEl.style.minHeight = Math.ceil(window.innerHeight - topBarH) + "px";
+  return { width: Math.floor(w), height: Math.floor(h) };
+}
+
+let pageFlip = null;
+
+const iaImg = (id, i, w) => `https://archive.org/download/${encodeURIComponent(id)}/page/n${i}_w${w}.jpg`;
+
+function loadImage(src){
+  return new Promise((res, rej) => {
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => rej(new Error("Image load failed"));
+    im.src = src;
+  });
+}
+
+function loadScript(src){
+  return new Promise((res, rej) => {
+    const s = document.createElement("script");
+    s.src = src; s.onload = res;
+    s.onerror = () => rej(new Error("Script load failed"));
+    document.head.appendChild(s);
+  });
+}
+
+async function getIaTotal(id){
+  if (params.pages > 0) return params.pages;
+  try {
+    const r = await fetch("https://archive.org/metadata/" + encodeURIComponent(id));
+    const d = await r.json();
+    const n = parseInt(d && d.metadata && d.metadata.imagecount, 10);
+    if (n > 0) return n;
+  } catch (e) {}
+  return 0;
+}
+
+// item-ലെ 1.jpg, 2.jpg ... എന്നിവ എണ്ണുന്നു (pages കൊടുത്തിട്ടില്ലെങ്കിൽ)
+async function getIaJpgCount(id){
+  try {
+    const r = await fetch("https://archive.org/metadata/" + encodeURIComponent(id));
+    const d = await r.json();
+    const names = new Set((d.files || []).map(f => f.name));
+    let n = 0;
+    while (names.has((n + 1) + ".jpg")) n++;
+    return n;
+  } catch (e) { return 0; }
+}
+
+async function init(){
+  if (!params.dir && !params.ia && !params.pdf) { showError(t("noPdf")); return; }
+  try {
+    let srcs, total, width, height, lazy = false;
+
+    if (params.dir) {
+      // PDF-ൽ നിന്ന് GitHub Action ഉണ്ടാക്കിയ പേജ് ചിത്രങ്ങൾ (magazines/<name>/1.jpg, 2.jpg ...) - ഈ സൈറ്റിൽ നിന്നുതന്നെ
+      if (!(params.pages > 0)) throw new Error("Page count missing (pages=)");
+      total = params.pages;
+      const jpg = i => `${params.dir}/${i + 1}.jpg`;
+      const first = await loadImage(jpg(0));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => jpg(i));
+      lazy = true;
+    } else if (params.ia && params.fmt === "jpg") {
+      // Newest way: our own JPG pages (1.jpg, 2.jpg ...) uploaded to archive.org - no waiting for processing
+      total = params.pages > 0 ? params.pages : await getIaJpgCount(params.ia);
+      if (!total) throw new Error("Page images not found. Files must be named 1.jpg, 2.jpg, ...");
+      const jpg = i => `https://archive.org/download/${encodeURIComponent(params.ia)}/${i + 1}.jpg`;
+      const first = await loadImage(jpg(0));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => jpg(i));
+      lazy = true;
+    } else if (params.ia) {
+      // Older way: archive.org builds page images from a PDF (slow to process)
+      total = await getIaTotal(params.ia);
+      if (!total) throw new Error("Page count not found. Add &pages=43 to the URL.");
+      const first = await loadImage(iaImg(params.ia, 0, params.w));
+      width = first.naturalWidth; height = first.naturalHeight;
+      srcs = Array.from({ length: total }, (_, i) => iaImg(params.ia, i, params.w));
+      lazy = true;
+    } else {
+      // Old way: PDF stored in this repo, rendered with pdf.js
+      await loadScript("https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js");
+      const r = await renderPdfToImages(params.pdf);
+      srcs = r.images; total = r.total; width = r.width; height = r.height;
+    }
+    if (!srcs.length) { showError(); return; }
+
+    const startPage = Math.max(0, Math.min(total - 1,
+      parseInt(new URLSearchParams(location.search).get("page") || "1", 10) - 1));
+
+    // പുസ്തകം (പുതിയ വലിപ്പത്തിൽ) വീണ്ടും ഉണ്ടാക്കാൻ ഉപയോഗിക്കുന്നു
+    function build(startIdx){
+      const old = document.getElementById("bookEl");
+      if (old) old.remove();
+      const bookEl = document.createElement("div");
+      bookEl.id = "bookEl";
+      stageEl.appendChild(bookEl);
+
+      const size = computeBookSize(width, height);
+
+      const imgEls = srcs.map((s, i) => {
+        const d = document.createElement("div");
+        d.className = "page";
+        const im = document.createElement("img");
+        im.alt = (params.lang === "en" ? "Page " : "പേജ് ") + (i + 1);
+        im.draggable = false;
+        if (!lazy) im.src = s;
+        d.appendChild(im);
+        bookEl.appendChild(d);
+        return im;
+      });
+
+      // Load only the pages near the reader (saves data on phones)
+      function loadNear(n){
+        if (!lazy) return;
+        for (let i = Math.max(0, n - 3); i <= Math.min(total - 1, n + 5); i++) {
+          if (!imgEls[i].getAttribute("src")) imgEls[i].src = srcs[i];
+        }
+      }
+      loadNear(startIdx);
+
+      pageFlip = new St.PageFlip(bookEl, {
+        width: size.width,
+        height: size.height,
+        size: "fixed",
+        minWidth: 200,
+        maxWidth: 1400,
+        minHeight: 250,
+        maxHeight: 1800,
+        showCover: true,
+        usePortrait: window.innerWidth < 700,
+        maxShadowOpacity: 0.5,
+        mobileScrollSupport: true,
+        swipeDistance: 20
+      });
+      pageFlip.loadFromHTML(bookEl.querySelectorAll(".page"));
+      if (startIdx > 0) pageFlip.turnToPage(startIdx);
+
+      const showPos = (n) => {
+        pageCountEl.textContent = `${n + 1} / ${total}`;
+        prevBtn.disabled = n === 0;
+        nextBtn.disabled = n >= total - 1;
+      };
+      pageFlip.on("flip", (e) => { showPos(e.data); loadNear(e.data); });
+      showPos(startIdx);
+    }
+
+    build(startPage);
+    
+    prevBtn.onclick = () => pageFlip.flipPrev();
+    nextBtn.onclick = () => pageFlip.flipNext();
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft") pageFlip.flipPrev();
+      if (e.key === "ArrowRight") pageFlip.flipNext();
+    });
+
+    // സ്ക്രീൻ തിരിക്കുമ്പോഴോ പൂർണ്ണ സ്ക്രീൻ ആകുമ്പോഴോ പേജ് വലിപ്പം പുതുക്കുന്നു
+    let lastW = window.innerWidth, lastH = window.innerHeight, rt = null;
+    window.addEventListener("resize", () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        if (Math.abs(window.innerWidth - lastW) < 40 && Math.abs(window.innerHeight - lastH) < 100) return;
+        lastW = window.innerWidth; lastH = window.innerHeight;
+        const cur = pageFlip.getCurrentPageIndex();
+        try { pageFlip.destroy(); } catch (e) {}
+        build(cur);
+      }, 350);
+    });
+
+    // പൂർണ്ണ സ്ക്രീൻ ബട്ടൺ (iPhone Safari പിന്തുണയ്ക്കില്ല, അവിടെ ബട്ടൺ മറയ്ക്കും)
+    const fullBtn = document.getElementById("fbFullBtn");
+    if (!document.documentElement.requestFullscreen) {
+      fullBtn.style.display = "none";
+    } else {
+      fullBtn.onclick = () => {
+        if (document.fullscreenElement) document.exitFullscreen();
+        else document.documentElement.requestFullscreen().catch(() => {});
+      };
+    }
+
+    statusEl.style.display = "none";
+  } catch (err) {
+    console.error("Flipbook load error:", err);
+    showError(err && err.message ? err.message : "");
+  }
+}
+
+init();
+</script>
+</body>
+</html>
