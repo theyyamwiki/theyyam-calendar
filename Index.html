@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kavu Data Management</title>
+
+  <!-- വെബ്സൈറ്റ് ഐക്കൺ (Favicon) -->
+  <link rel="icon" type="image/png" href="https://github.com/theyyamwiki/Theyyam-Photto/blob/main/logo-square%20(2).png?raw=true">
+
+  <!-- ആപ്പിൾ / ആൻഡ്രോയിഡ് ഹോം സ്ക്രീൻ ഐക്കൺ -->
+  <link rel="apple-touch-icon" href="https://github.com/theyyamwiki/Theyyam-Photto/blob/main/logo-square%20(2).png?raw=true">
+
+  <style>
+    * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+    body { background-color: #f4f6f8; margin: 0; padding: 12px; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 16px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+    h2 { text-align: center; color: #1b5e20; margin-top: 0; font-size: 20px; }
+    .form-group { margin-bottom: 12px; }
+    label { font-weight: 600; display: block; margin-bottom: 4px; font-size: 13px; color: #444; }
+    .hint { font-size: 11px; color: #888; margin-top: 2px; }
+    .section-title { font-size: 14px; font-weight: bold; color: #556; margin: 16px 0 8px; padding-top: 10px; border-top: 1px solid #eee; }
+    input[type="text"], input[type="date"], select, textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; background: #fff; }
+    textarea { height: 60px; resize: vertical; }
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; background-color: #2e7d32; color: white; font-weight: bold; font-size: 15px; cursor: pointer; margin-top: 8px; text-align: center; }
+    .btn:active { background-color: #1b5e20; }
+    .btn-ocr { background-color: #0288d1; }
+    .btn-ocr:active { background-color: #01579b; }
+    .paste-zone { border: 2px dashed #0288d1; border-radius: 8px; padding: 14px; text-align: center; color: #0277bd; font-size: 13px; margin-top: 8px; background: #f1fbff; cursor: text; }
+    .paste-zone.drag { background: #e1f5fe; }
+    .crop-container { width: 100%; max-height: 350px; overflow: hidden; margin-top: 10px; display: none; background: #222; text-align: center; }
+    .crop-container img { max-width: 100%; }
+    .suggestions { border: 1px solid #ddd; background: white; max-height: 150px; overflow-y: auto; border-radius: 6px; display: none; margin-top: 4px; }
+    .suggestion-item { padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; font-size: 13px; }
+    .suggestion-item:hover { background-color: #e8f5e9; }
+    .loading { display: none; text-align: center; font-weight: bold; color: #d32f2f; margin: 10px 0; }
+    .checkbox-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid #f0f0f0; }
+    .checkbox-row input[type="checkbox"] { width: auto; transform: scale(1.3); }
+    .checkbox-row label { margin: 0; font-weight: 500; }
+    .pinned-box { background: #fff8e1; border: 1px solid #ffca28; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; }
+    .tags-box { background: #f3f0fb; border: 1px solid #b39ddb; border-radius: 8px; padding: 4px 10px; }
+    .captcha-box { background:#fff3e0; border:1px solid #ffb74d; padding:10px; border-radius:8px; }
+    .admin-toggle { background: transparent; border: 1px solid #cfd8dc; color: #607d8b; font-size: 11px; padding: 6px 10px; border-radius: 20px; cursor: pointer; display: block; margin: 0 auto 10px; }
+    .admin-panel { display: none; background: #eceff1; border: 1px solid #b0bec5; border-radius: 8px; padding: 10px; margin-bottom: 16px; }
+    .admin-panel h3 { font-size: 14px; margin: 0 0 8px; color: #37474f; }
+    .pending-actions { display: flex; gap: 8px; margin-top: 6px; }
+    .pending-actions .btn { margin-top: 0; padding: 8px; font-size: 13px; }
+    .field-missing { border-color: #e53935 !important; background-color: #fff5f5 !important; }
+    .field-filled  { border-color: #43a047 !important; background-color: #f5fff5 !important; }
+    .notice-box { border: 1px dashed #0288d1; padding: 10px; border-radius: 8px; background: #e1f5fe; margin-bottom: 12px; }
+    .pick { display: block; margin: 6px 0 0; padding: 8px; background: #fff; border-radius: 6px; text-align: center; cursor: pointer; font-weight: 500; }
+    .pick img { max-width: 100%; max-height: 420px; border-radius: 4px; }
+    .ph { padding: 22px 4px; color: #777; font-size: 13px; }
+    .tap { font-size: 12px; color: #0277bd; margin-top: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>കാവ് ഡാറ്റാ മാനേജ്മെന്റ്</h2>
+
+  <!-- Admin Toggle -->
+  <button type="button" class="admin-toggle" onclick="toggleAdminPanel()">🔐 അഡ്മിൻ പാനൽ</button>
+
+  <!-- Admin Panel: ലോഗിൻ + Pending Edits Approval -->
+  <div class="admin-panel" id="adminPanel">
+    <h3>അഡ്മിൻ ലോഗിൻ / Pending എഡിറ്റുകൾ</h3>
+    <div class="form-group">
+      <label>Admin PIN</label>
+      <input type="text" id="adminPin" inputmode="numeric" placeholder="PIN നൽകുക">
+    </div>
+    <button type="button" class="btn" style="background-color:#37474f;" onclick="loadPendingList()">ലോഗിൻ ചെയ്യുക / Pending ലിസ്റ്റ് ലോഡ് ചെയ്യുക</button>
+    <div id="adminState" class="hint" style="margin-top:6px;"></div>
+    <button type="button" id="siteUpdateBtn" class="btn" style="display:none; background-color:#e65100; font-size:17px; padding:16px; margin-top:12px;" onclick="triggerSiteUpdate()">🔄 സൈറ്റ് അപ്ഡേറ്റ് ചെയ്യുക<br><span style="font-size:12px; font-weight:normal;">ഷീറ്റ് → വെബ്സൈറ്റ്</span></button>
+    <div id="siteUpdateMsg" class="hint" style="margin-top:6px; font-size:13px;"></div>
+    <div id="pendingList" style="margin-top:10px;"></div>
+  </div>
+
+  <!-- Search Filter -->
+  <div style="background: #e8f5e9; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+    <label>സ്മാർട്ട് സെർച്ച് (Kavu ID / പേര് / കൊല്ലവർഷം)</label>
+    <div style="display: flex; gap: 8px; margin-bottom: 6px;">
+      <input type="text" id="search_kollavarsham" placeholder="കൊല്ലവർഷം (ഉദാ: കുംഭം 10)">
+      <input type="text" id="search_name" placeholder="Kavu ID അല്ലെങ്കിൽ പേര്">
+    </div>
+    <div class="hint">ഈ ബോക്സിൽ Kavu ID അല്ലെങ്കിൽ പേര് ടൈപ്പ് ചെയ്ത് തിരയാം. കാവ് തിരഞ്ഞെടുത്താൽ അതിന്റെ Kavu ID ഇവിടെ കാണും. പുതിയ കാവിന് ID സ്വയം ഉണ്ടാകും.</div>
+    <button class="btn btn-ocr" style="padding: 8px; margin-top: 8px;" onclick="searchKavu()">തിരയുക 🔍</button>
+    <div id="suggestions" class="suggestions"></div>
+  </div>
+
+  <div class="notice-box">
+    <label>📜 മലയാളം നോട്ടീസ്</label>
+    <label for="file_ml" class="pick" onclick="kfLang='ml'">
+      <img id="img_ml" alt="" style="display:none">
+      <div id="ph_ml" class="ph">ചിത്രമില്ല</div>
+      <div class="tap">📷 ക്ലിക്ക് ചെയ്ത് ചിത്രം തിരഞ്ഞെടുക്കുക / മാറ്റുക</div>
+    </label>
+    <input type="file" id="file_ml" accept="image/*" style="display:none" onchange="onPick('ml', this)">
+    <div class="hint" id="st_ml">കാവ് തിരഞ്ഞെടുത്താൽ നിലവിലുള്ള നോട്ടീസ് ഇവിടെ കാണും. പുതിയത് തിരഞ്ഞെടുത്താൽ "സേവ് ചെയ്യുക" ക്ലിക്ക് ചെയ്യുമ്പോൾ അപ്‌ലോഡ് ആകും.</div>
+  </div>
+
+  <div class="notice-box">
+    <label>🔤 English നോട്ടീസ് (ഉണ്ടെങ്കിൽ മാത്രം)</label>
+    <label for="file_en" class="pick" onclick="kfLang='en'">
+      <img id="img_en" alt="" style="display:none">
+      <div id="ph_en" class="ph">ചിത്രമില്ല</div>
+      <div class="tap">📷 ക്ലിക്ക് ചെയ്ത് ചിത്രം തിരഞ്ഞെടുക്കുക / മാറ്റുക</div>
+    </label>
+    <input type="file" id="file_en" accept="image/*" style="display:none" onchange="onPick('en', this)">
+    <div class="hint" id="st_en">English നോട്ടീസ് ഉണ്ടെങ്കിൽ ഇവിടെ കാണും / പുതിയത് ചേർക്കാം.</div>
+  </div>
+
+  <div class="notice-box">
+    <label>🇮🇳 ഹിന്ദി നോട്ടീസ് (ഉണ്ടെങ്കിൽ മാത്രം)</label>
+    <label for="file_hi" class="pick" onclick="kfLang='hi'">
+      <img id="img_hi" alt="" style="display:none">
+      <div id="ph_hi" class="ph">ചിത്രമില്ല</div>
+      <div class="tap">📷 ക്ലിക്ക് ചെയ്ത് ചിത്രം തിരഞ്ഞെടുക്കുക / മാറ്റുക</div>
+    </label>
+    <input type="file" id="file_hi" accept="image/*" style="display:none" onchange="onPick('hi', this)">
+    <div class="hint" id="st_hi">ഹിന്ദി നോട്ടീസ് ഉണ്ടെങ്കിൽ ഇവിടെ കാണും / പുതിയത് ചേർക്കാം.</div>
+  </div>
+
+  <div id="loadingStatus" class="loading">പ്രൊസസ്സിംഗ് നടക്കുന്നു... ദയവായി കാത്തുനിൽക്കൂ...</div>
+
+  <!-- Main Form -->
+  <form id="kavuForm">
+    <input type="hidden" id="rowIndex" name="rowIndex">
+
+    <input type="hidden" id="kavu_id" name="kavu_id">
+    <div class="form-group">
+      <label>Status</label>
+      <select id="status" name="status">
+        <option value="">പരിശോധനയിൽ (Pending)</option>
+        <option value="yes">സ്ഥിരീകരിച്ചത് (Confirmed)</option>
+      </select>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>കാവിന്റെ പേര് (ML)</label>
+        <input type="text" id="kavu_name" name="kavu_name">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Kavu Name (EN)</label>
+        <input type="text" id="kavu_name_e" name="kavu_name_e">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>സ്ഥലം (ML)</label>
+        <input type="text" id="place" name="place">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Place (EN)</label>
+        <input type="text" id="place_e" name="place_e">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>ജില്ല (ML)</label>
+        <input type="text" id="district" name="district">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>District (EN)</label>
+        <input type="text" id="district_e" name="district_e">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>കൊല്ലവർഷം</label>
+        <input type="text" id="kollavarsham" name="kollavarsham">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Kollavarsham (EN)</label>
+        <input type="text" id="kollavarsham_e" name="kollavarsham_e">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>Start Date</label>
+        <input type="date" id="start_date" name="start_date">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>End Date</label>
+        <input type="date" id="end_date" name="end_date">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>തെയ്യങ്ങളുടെ ലിസ്റ്റ് (ML) — കോമ ഇട്ട് വേർതിരിക്കുക</label>
+      <textarea id="theyyam_list" name="theyyam_list"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Theyyam List (EN)</label>
+      <textarea id="theyyam_list_e" name="theyyam_list_e"></textarea>
+    </div>
+
+    <div class="section-title">വിവരണം</div>
+    <div class="form-group">
+      <label>Description (ML)</label>
+      <textarea id="description" name="description"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Description (EN)</label>
+      <textarea id="description_e" name="description_e"></textarea>
+    </div>
+
+    <div class="section-title">ബന്ധപ്പെടാനുള്ള വിവരങ്ങൾ</div>
+    <div style="display:flex; gap:8px;">
+      <div class="form-group" style="flex:1;">
+        <label>കോൺടാക്ട് നമ്പർ</label>
+        <input type="text" id="contact_no" name="contact_no">
+      </div>
+      <div class="form-group" style="flex:1;">
+        <label>Google Maps ലിങ്ക്</label>
+        <input type="text" id="googlemap_link" name="googlemap_link">
+      </div>
+    </div>
+
+    <input type="hidden" id="image_url" name="image_url">
+    <input type="hidden" id="image_url_en" name="image_url_en">
+    <input type="hidden" id="image_url_hi" name="image_url_hi">
+
+    <div class="section-title">തിരുമുറ്റം / സ്ക്രോൾ അപ്ഡേറ്റുകൾ</div>
+    <div class="form-group">
+      <label>തിരുമുറ്റം അപ്ഡേറ്റ് (ML)</label>
+      <textarea id="thirumuttam" name="thirumuttam"></textarea>
+    </div>
+    <div class="form-group">
+      <label>Thirumuttam Update (EN)</label>
+      <textarea id="thirumuttam_e" name="thirumuttam_e"></textarea>
+    </div>
+    <div class="form-group">
+      <label>സ്ക്രോൾ ബോക്സ് അറിയിപ്പ് (ML)</label>
+      <input type="text" id="scroll_box" name="scroll_box">
+    </div>
+    <div class="form-group">
+      <label>Scroll Box Notice (EN)</label>
+      <input type="text" id="scroll_box_e" name="scroll_box_e">
+    </div>
+
+    <div class="section-title">എപ്പോഴും പിൻ ചെയ്യുന്ന പ്രത്യേക ബോക്സുകൾ</div>
+    <div class="pinned-box">
+      <div class="checkbox-row">
+        <input type="checkbox" id="neeliyar_kottam" name="neeliyar_kottam">
+        <label for="neeliyar_kottam">നീലിയാർ കോട്ടം</label>
+      </div>
+      <div class="checkbox-row" style="border-bottom:none;">
+        <input type="checkbox" id="parassini_madappura" name="parassini_madappura">
+        <label for="parassini_madappura">പരശ്ശിനി മഠപ്പുര</label>
+      </div>
+    </div>
+
+    <div class="section-title">ഫിൽട്ടർ ടാഗുകൾ (തെയ്യം വിഭാഗം)</div>
+    <div class="tags-box">
+      <div class="checkbox-row"><input type="checkbox" id="kativanur_veeran" name="kativanur_veeran"><label for="kativanur_veeran">കതിവന്നൂർ വീരൻ</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="kandanar_kelan" name="kandanar_kelan"><label for="kandanar_kelan">കണ്ടനാർ കേളൻ</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="muchilot_bhagavathy" name="muchilot_bhagavathy"><label for="muchilot_bhagavathy">മുച്ചിലോട്ട് ഭഗവതി</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="perumkaliyattam" name="perumkaliyattam"><label for="perumkaliyattam">പെരുങ്കളിയാട്ടം</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="thalappoli" name="thalappoli"><label for="thalappoli">താലപ്പൊലി</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="theyyam_kettu" name="theyyam_kettu"><label for="theyyam_kettu">തെയ്യം കെട്ട്</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="thulu_theyyam" name="thulu_theyyam"><label for="thulu_theyyam">തുളു തെയ്യം</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="mookambika_gulikan" name="mookambika_gulikan"><label for="mookambika_gulikan">മൂകാംബിക ഗുളികൻ</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="panchuruli" name="panchuruli"><label for="panchuruli">പഞ്ചുരുളി</label></div>
+      <div class="checkbox-row"><input type="checkbox" id="kozhikode_district_theyyam" name="kozhikode_district_theyyam"><label for="kozhikode_district_theyyam">കോഴിക്കോട് ജില്ല തെയ്യം</label></div>
+      <div class="checkbox-row" style="border-bottom:none;"><input type="checkbox" id="theekuttichathan" name="theekuttichathan"><label for="theekuttichathan">തീകുട്ടിചാത്തൻ</label></div>
+    </div>
+
+    <!-- Captcha / Spam Protection (അഡ്മിൻ ലോഗിൻ ചെയ്താൽ മറയും) -->
+    <div class="form-group captcha-box" id="captchaBox">
+      <label id="captchaLabel">Captcha ലോഡ് ചെയ്യുന്നു...</label>
+      <input type="text" id="captchaAnswer" inputmode="numeric" placeholder="ഉത്തരം ടൈപ്പ് ചെയ്യുക">
+    </div>
+
+    <button type="button" class="btn" id="saveBtn" onclick="saveData()" style="margin-top:16px;">ഡാറ്റ സേവ് ചെയ്യുക 💾</button>
+  </form>
+</div>
+
+<script>
+  let croppedBase64 = null;      // Malayalam notice image (base64)
+  let croppedBase64En = null;
+  let croppedBase64Hi = null;    // English notice image (base64)
+  let captchaToken = null;
+  let isAdmin = false;           // അഡ്മിൻ ലോഗിൻ ചെയ്തോ?
+  let adminPinValue = '';
+
+  // ⚠️ "yes"/"y"/"true"/"confirmed" — ഇവയെല്ലാം checked ആയി കണക്കാക്കുന്നു
+  function isYesValue(v) {
+    const s = String(v || '').trim().toLowerCase();
+    return s === 'yes' || s === 'y' || s === 'true' || s === 'confirmed';
+  }
+
+  function setFieldValue(key, val) {
+    const el = document.getElementById(key);
+    if (!el) return;
+    if (el.type === 'checkbox') {
+      el.checked = isYesValue(val);
+    } else {
+      el.value = val !== undefined && val !== null ? val : '';
+    }
+  }
+
+  // ഷീറ്റിലെ ലിങ്ക് ഏത് രൂപത്തിലായാലും (raw.githubusercontent / github.com/blob / Drive) കാണിക്കാവുന്ന ലിങ്കുകളുടെ പട്ടിക
+  function imageCandidates(u) {
+    u = String(u || '').trim();
+    if (!u) return [];
+    if (u.indexOf('data:') === 0) return [u];
+    const out = [];
+    let m;
+    if (/drive\.google\.com/.test(u) && (m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/))) {
+      out.push('https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w1000', 'https://lh3.googleusercontent.com/d/' + m[1]);
+      return out;
+    }
+    if ((m = u.match(/^https?:\/\/github\.com\/([^\/]+)\/([^\/]+)\/(?:blob|raw)\/([^\/]+)\/([^?#]+)/))) {
+      out.push('https://raw.githubusercontent.com/' + m[1] + '/' + m[2] + '/' + m[3] + '/' + m[4],
+               'https://cdn.jsdelivr.net/gh/' + m[1] + '/' + m[2] + '@' + m[3] + '/' + m[4]);
+      return out;
+    }
+    out.push(u);
+    if ((m = u.match(/^https?:\/\/raw\.githubusercontent\.com\/([^\/]+)\/([^\/]+)\/([^\/]+)\/([^?#]+)/))) {
+      out.push('https://cdn.jsdelivr.net/gh/' + m[1] + '/' + m[2] + '@' + m[3] + '/' + m[4]);
+    }
+    return out;
+  }
+
+  function fillFormFromData(data) {
+    for (let key in data) {
+      setFieldValue(key, data[key]);
+    }
+    showNotice('ml', data.image_url);
+    showNotice('en', data.image_url_en);
+    showNotice('hi', data.image_url_hi);
+    document.getElementById('st_hi').innerText = data.image_url_hi ? 'നിലവിലുള്ള ഹിന്ദി നോട്ടീസ് — മാറ്റണമെങ്കിൽ ക്ലിക്ക് ചെയ്യുക.' : 'ഹിന്ദി നോട്ടീസ് ഇല്ല — വേണമെങ്കിൽ ക്ലിക്ക് ചെയ്ത് ചേർക്കുക.';
+    document.getElementById('st_ml').innerText = data.image_url ? 'നിലവിലുള്ള നോട്ടീസ് — മാറ്റണമെങ്കിൽ ചിത്രത്തിൽ ക്ലിക്ക് ചെയ്യുക.' : 'ഈ കാവിന് നോട്ടീസ് ഇല്ല — ക്ലിക്ക് ചെയ്ത് ചേർക്കുക.';
+    document.getElementById('st_en').innerText = data.image_url_en ? 'നിലവിലുള്ള English നോട്ടീസ് — മാറ്റണമെങ്കിൽ ക്ലിക്ക് ചെയ്യുക.' : 'English നോട്ടീസ് ഇല്ല — വേണമെങ്കിൽ ക്ലിക്ക് ചെയ്ത് ചേർക്കുക.';
+    highlightFieldStatus();
+  }
+
+  // ഡാറ്റ ഉള്ള ഫീൽഡ് പച്ച, ഇല്ലാത്തത് ചുവപ്പ് ബോർഡർ
+  function highlightFieldStatus() {
+    const form = document.getElementById('kavuForm');
+    for (let el of form.elements) {
+      if (!el.name) continue;
+      if (el.type === 'checkbox' || el.type === 'hidden' || el.type === 'file') continue;
+
+      el.classList.remove('field-missing', 'field-filled');
+      const val = String(el.value || '').trim();
+      if (val === '') {
+        el.classList.add('field-missing');
+      } else {
+        el.classList.add('field-filled');
+      }
+    }
+  }
+
+  function searchKavu() {
+    let name = document.getElementById('search_name').value;
+    let kollavarsham = document.getElementById('search_kollavarsham').value;
+    let suggDiv = document.getElementById('suggestions');
+    suggDiv.innerHTML = "തിരയുന്നു...";
+    suggDiv.style.display = "block";
+
+    google.script.run.withSuccessHandler(function(results) {
+      suggDiv.innerHTML = "";
+      if (results.length === 0) {
+        suggDiv.innerHTML = "<div class='suggestion-item'>ഡാറ്റയൊന്നും കണ്ടെത്തിയില്ല</div>";
+        return;
+      }
+      results.forEach(res => {
+        let div = document.createElement('div');
+        div.className = 'suggestion-item';
+        div.innerText = res.label;
+        div.onclick = function() {
+          loadKavuData(res.rowIndex);
+          suggDiv.style.display = "none";
+        };
+        suggDiv.appendChild(div);
+      });
+    }).getKavuSuggestions(name, kollavarsham);
+  }
+
+  let searchDebounce;
+  ['search_name', 'search_kollavarsham'].forEach(function (id) {
+    document.getElementById(id).addEventListener('input', function () {
+      clearTimeout(searchDebounce);
+      searchDebounce = setTimeout(searchKavu, 350);
+    });
+  });
+
+  function loadKavuData(rowIndex) {
+    document.getElementById('loadingStatus').style.display = 'block';
+    google.script.run.withSuccessHandler(function(data) {
+      document.getElementById('loadingStatus').style.display = 'none';
+      croppedBase64 = null; croppedBase64En = null; croppedBase64Hi = null;
+      fillFormFromData(data);
+      document.getElementById('search_name').value = data.kavu_id || '';
+    }).getKavuByRowIndex(rowIndex);
+  }
+
+  // ================== NOTICE IMAGES: തിരഞ്ഞെടുക്കുക (ഫോൺ/കമ്പ്യൂട്ടർ), ക്രോപ്പ് ഇല്ല, OCR ഇല്ല ==================
+  // lang: 'ml' (Malayalam) / 'en' (English). ഒരേ ബോക്സിൽ നിലവിലുള്ള ചിത്രം + പുതിയതിന്റെ പ്രിവ്യൂ.
+  let kfLang = 'ml';
+
+  function showNotice(lang, url) {
+    const im = document.getElementById('img_' + lang), ph = document.getElementById('ph_' + lang);
+    const list = imageCandidates(url);
+    if (!list.length) { im.style.display = 'none'; im.removeAttribute('src'); ph.style.display = 'block'; ph.innerText = 'ചിത്രമില്ല'; return; }
+    let i = 0;
+    im.referrerPolicy = 'no-referrer';
+    im.onload = function () { im.style.display = 'inline-block'; ph.style.display = 'none'; };
+    im.onerror = function () {
+      i++;
+      if (i < list.length) { im.src = list[i]; return; }
+      im.style.display = 'none'; ph.style.display = 'block';
+      ph.textContent = 'ചിത്രം ലോഡ് ആയില്ല. ';
+      const a = document.createElement('a');
+      a.href = list[0]; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'ലിങ്ക് തുറന്ന് നോക്കുക';
+      ph.appendChild(a);
+    };
+    im.src = list[0];
+  }
+
+  function onPick(lang, input) {
+    const f = input.files && input.files[0];
+    if (f) resizeImage(f, lang);
+  }
+
+  // ഫോൺ ഫോട്ടോകൾ വലുതായതിനാൽ objectURL ഉപയോഗിച്ച് 1024px ആയി ചെറുതാക്കുന്നു (മെമ്മറി കുറവ് മതി)
+  function resizeImage(file, lang) {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = function () {
+      const maxDim = 1024;
+      let w = img.width, h = img.height;
+      if (w > maxDim || h > maxDim) {
+        if (w >= h) { h = Math.round(h * (maxDim / w)); w = maxDim; }
+        else { w = Math.round(w * (maxDim / h)); h = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      const out = canvas.toDataURL('image/jpeg', 0.8);
+      URL.revokeObjectURL(url);
+      const b64 = out.split(',')[1];
+      if (lang === 'en') { croppedBase64En = b64; } else if (lang === 'hi') { croppedBase64Hi = b64; } else { croppedBase64 = b64; }
+      showNotice(lang, out);
+      document.getElementById('st_' + lang).innerText = '✅ പുതിയ ' + (lang === 'en' ? 'English' : lang === 'hi' ? 'ഹിന്ദി' : 'മലയാളം') + ' നോട്ടീസ് തയ്യാറായി — "ഡാറ്റ സേവ് ചെയ്യുക" ക്ലിക്ക് ചെയ്യുമ്പോൾ അപ്‌ലോഡ് ആകും.';
+    };
+    img.onerror = function () {
+      URL.revokeObjectURL(url);
+      alert('❌ ഈ ചിത്രം വായിക്കാൻ പറ്റിയില്ല. JPG / PNG ചിത്രം തിരഞ്ഞെടുക്കുക. (iPhone ആണെങ്കിൽ ക്യാമറ ഫോർമാറ്റ് "Most Compatible" ആക്കുക.)');
+    };
+    img.src = url;
+  }
+
+  // കമ്പ്യൂട്ടറിൽ Ctrl+V: അവസാനം ക്ലിക്ക് ചെയ്ത ബോക്സിലേക്ക് (ML / EN) ചിത്രം എടുക്കുന്നു
+  document.addEventListener('paste', function (e) {
+    const items = (e.clipboardData || window.clipboardData || {}).items;
+    if (!items) return;
+    for (const item of items) {
+      if (item.type.indexOf('image') !== -1) { resizeImage(item.getAsFile(), kfLang); break; }
+    }
+  });
+
+  function resetForm() {
+    const form = document.getElementById('kavuForm');
+    form.reset();
+    document.getElementById('rowIndex').value = '';
+    document.getElementById('kavu_id').value = '';
+    document.getElementById('image_url').value = '';
+    document.getElementById('image_url_en').value = '';
+    document.getElementById('image_url_hi').value = '';
+
+    croppedBase64 = null; croppedBase64En = null; croppedBase64Hi = null;
+    showNotice('ml', ''); showNotice('en', ''); showNotice('hi', '');
+    document.getElementById('file_ml').value = ''; document.getElementById('file_en').value = ''; document.getElementById('file_hi').value = '';
+    document.getElementById('st_ml').innerText = 'കാവ് തിരഞ്ഞെടുത്താൽ നിലവിലുള്ള നോട്ടീസ് ഇവിടെ കാണും. പുതിയത് തിരഞ്ഞെടുത്താൽ "സേവ് ചെയ്യുക" ക്ലിക്ക് ചെയ്യുമ്പോൾ അപ്‌ലോഡ് ആകും.';
+    document.getElementById('st_en').innerText = 'English നോട്ടീസ് ഉണ്ടെങ്കിൽ ഇവിടെ കാണും / പുതിയത് ചേർക്കാം.';
+    document.getElementById('st_hi').innerText = 'ഹിന്ദി നോട്ടീസ് ഉണ്ടെങ്കിൽ ഇവിടെ കാണും / പുതിയത് ചേർക്കാം.';
+
+    document.getElementById('search_name').value = '';
+    document.getElementById('search_kollavarsham').value = '';
+    document.getElementById('suggestions').style.display = 'none';
+    for (let el of form.elements) el.classList.remove('field-missing', 'field-filled');
+  }
+
+  // ================== CAPTCHA / SPAM PROTECTION ==================
+
+  function loadCaptcha() {
+    if (isAdmin) return; // അഡ്മിന് ക്യാപ്ച്ച വേണ്ട
+    document.getElementById('captchaLabel').innerText = 'Captcha ലോഡ് ചെയ്യുന്നു...';
+    document.getElementById('captchaAnswer').value = '';
+    google.script.run.withSuccessHandler(function(res) {
+      captchaToken = res.token;
+      document.getElementById('captchaLabel').innerText = '🛡️ സ്പാം സംരക്ഷണം: ' + res.question;
+    }).generateCaptcha();
+  }
+  window.addEventListener('DOMContentLoaded', loadCaptcha);
+
+  // ================== SAVE ==================
+  // സാധാരണ ഉപയോക്താവ്: ക്യാപ്ച്ച + അഡ്മിൻ അപ്രൂവൽ (Pending)
+  // അഡ്മിൻ (PIN ലോഗിൻ): ക്യാപ്ച്ച ഇല്ല, നേരിട്ട് ഷീറ്റിലേക്ക് (അപ്രൂവൽ ഇല്ല)
+
+  function saveData() {
+    let form = document.getElementById('kavuForm');
+    let formData = {};
+    // ⚠️ checkbox ഫീൽഡുകൾക്ക് .value അല്ല .checked ആണ് നോക്കേണ്ടത്
+    for (let el of form.elements) {
+      if (!el.name) continue;
+      if (el.type === 'checkbox') {
+        formData[el.name] = el.checked ? 'yes' : '';
+      } else {
+        formData[el.name] = el.value;
+      }
+    }
+
+    if (!formData.kavu_name.trim() && !formData.kavu_name_e.trim()) {
+      alert('❌ ഡാറ്റ എൻട്രി എറർ: കാവിന്റെ പേര് (Malayalam അല്ലെങ്കിൽ English) നിർബന്ധമാണ്. ദയവായി ചേർത്ത് വീണ്ടും ശ്രമിക്കുക.');
+      return;
+    }
+
+    let captchaAnswer = '';
+    if (!isAdmin) {
+      captchaAnswer = document.getElementById('captchaAnswer').value;
+      if (!captchaAnswer) { alert('സ്പാം സംരക്ഷണ ചോദ്യത്തിന് ഉത്തരം നൽകുക.'); return; }
+    }
+
+    let rowIndex = document.getElementById('rowIndex').value;
+    document.getElementById('loadingStatus').style.display = 'block';
+
+    const run = google.script.run.withSuccessHandler(function(res) {
+      document.getElementById('loadingStatus').style.display = 'none';
+      alert(res.message || ("ഡാറ്റ വിജയകരമായി സേവ് ചെയ്തു! Kavu ID: " + res.kavu_id));
+      resetForm();
+      loadCaptcha();
+    }).withFailureHandler(function(err) {
+      document.getElementById('loadingStatus').style.display = 'none';
+      alert("❌ Save Error: " + err.message);
+      loadCaptcha();
+    });
+
+    if (isAdmin) {
+      run.adminSaveDataToSheet(adminPinValue, formData, croppedBase64, "image/jpeg", "notice.jpg", rowIndex, croppedBase64En, "image/jpeg", "notice_en.jpg", croppedBase64Hi, "image/jpeg", "notice_hi.jpg");
+    } else {
+      run.saveDataToSheet(formData, croppedBase64, "image/jpeg", "notice.jpg", rowIndex, captchaToken, captchaAnswer, croppedBase64En, "image/jpeg", "notice_en.jpg", croppedBase64Hi, "image/jpeg", "notice_hi.jpg");
+    }
+  }
+
+  // ================== ADMIN PANEL: ലോഗിൻ + PENDING EDITS ==================
+
+  // ⚠️ അഡ്മിൻ PIN ലോഗിൻ ചെയ്തവർക്ക് മാത്രം: ഷീറ്റിലെ ഡാറ്റ വെബ്സൈറ്റിലേക്ക് അപ്ഡേറ്റ് ചെയ്യുന്നു (PIN സെർവറിലും പരിശോധിക്കും)
+  function triggerSiteUpdate() {
+    if (!isAdmin) { alert('ആദ്യം അഡ്മിൻ PIN ഉപയോഗിച്ച് ലോഗിൻ ചെയ്യുക.'); return; }
+    if (!confirm('ഷീറ്റിലെ ഡാറ്റ ഇപ്പോൾ വെബ്സൈറ്റിലേക്ക് അപ്ഡേറ്റ് ചെയ്യട്ടേ?')) return;
+    const btn = document.getElementById('siteUpdateBtn'), msg = document.getElementById('siteUpdateMsg');
+    btn.disabled = true; msg.innerText = 'ട്രിഗർ ചെയ്യുന്നു...';
+    google.script.run.withSuccessHandler(function(res) {
+      btn.disabled = false; msg.innerText = res.message;
+    }).withFailureHandler(function(err) {
+      btn.disabled = false; msg.innerText = '❌ ' + err.message;
+    }).adminTriggerSiteUpdate(adminPinValue);
+  }
+
+  function toggleAdminPanel() {
+    const el = document.getElementById('adminPanel');
+    el.style.display = el.style.display === 'none' || !el.style.display ? 'block' : 'none';
+  }
+
+  function loadPendingList() {
+    const pin = document.getElementById('adminPin').value;
+    const listEl = document.getElementById('pendingList');
+    listEl.innerHTML = 'ലോഡ് ചെയ്യുന്നു...';
+    google.script.run.withSuccessHandler(function(items) {
+      // PIN ശരിയാണ് → അഡ്മിൻ മോഡ്: ക്യാപ്ച്ച മറയ്ക്കുക, ഇനി നേരിട്ട് സേവ്
+      isAdmin = true;
+      adminPinValue = pin;
+      document.getElementById('captchaBox').style.display = 'none';
+      document.getElementById('saveBtn').innerText = 'നേരിട്ട് ഷീറ്റിലേക്ക് സേവ് ചെയ്യുക 💾';
+      document.getElementById('siteUpdateBtn').style.display = 'block';
+      document.getElementById('adminState').innerText = '✅ അഡ്മിൻ ലോഗിൻ ചെയ്തു — ക്യാപ്ച്ച വേണ്ട, സേവ് ചെയ്താൽ അപ്രൂവൽ ഇല്ലാതെ നേരിട്ട് ഷീറ്റിൽ വരും.';
+
+      if (!items.length) { listEl.innerHTML = '<p>Pending എഡിറ്റുകൾ ഒന്നും ഇല്ല.</p>'; return; }
+      listEl.innerHTML = '';
+      items.forEach(function(item) {
+        const div = document.createElement('div');
+        div.className = 'pinned-box';
+        div.innerHTML = '<b>' + (item.kavu_name || item.kavu_name_e || '(പേരില്ല)') + '</b> — ' + (item.place || '') + '<br><small>' + item._submitted_at + '</small>';
+
+        const actionsDiv = document.createElement('div');
+        actionsDiv.className = 'pending-actions';
+
+        const approveBtn = document.createElement('button');
+        approveBtn.className = 'btn'; approveBtn.innerText = '✅ Approve';
+        approveBtn.onclick = function() {
+          google.script.run.withSuccessHandler(function() { alert('Approved!'); loadPendingList(); })
+            .withFailureHandler(function(err) { alert('Error: ' + err.message); })
+            .approvePendingEdit(pin, item._pendingRowIndex);
+        };
+
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'btn'; rejectBtn.style.background = '#b3261e'; rejectBtn.innerText = '❌ Reject';
+        rejectBtn.onclick = function() {
+          google.script.run.withSuccessHandler(function() { alert('Rejected.'); loadPendingList(); })
+            .withFailureHandler(function(err) { alert('Error: ' + err.message); })
+            .rejectPendingEdit(pin, item._pendingRowIndex);
+        };
+
+        actionsDiv.appendChild(approveBtn);
+        actionsDiv.appendChild(rejectBtn);
+        div.appendChild(actionsDiv);
+        listEl.appendChild(div);
+      });
+    }).withFailureHandler(function(err) {
+      document.getElementById('adminState').innerText = '❌ ' + err.message;
+      listEl.innerHTML = '<p style="color:red;">Error: ' + err.message + '</p>';
+    }).getPendingEditsList(pin);
+  }
+</script>
+
+</body>
+</html>
