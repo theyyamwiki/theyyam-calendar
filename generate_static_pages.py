@@ -48,6 +48,7 @@ import re
 import sys
 from datetime import date
 from html import escape as h
+from urllib.parse import quote
 from io import StringIO
 from xml.sax.saxutils import escape as x
 
@@ -99,14 +100,25 @@ def is_truthy(value):
     return (value or "").strip().lower() == TRUE_VALUE
 
 
-def to_direct_image_url(url):
-    """Mirrors the site's client-side toDirectImageUrl(): turns a Google Drive
-    share link into a direct-loadable thumbnail URL. Leaves other URLs as-is."""
+def to_direct_image_url(url, base_url=""):
+    """Turns whatever is in the sheet's image column into an absolute, directly
+    loadable image URL (needed for og:image - WhatsApp/Facebook ignore
+    relative paths and HTML pages):
+      - Google Drive share link  -> drive thumbnail URL (as the site does)
+      - github.com/.../blob/...  -> raw.githubusercontent.com/... (the blob
+                                    link is an HTML page, not an image)
+      - relative path (notices/x.jpg) -> https://<site>/notices/x.jpg
+    Anything else is left as-is."""
     if not url:
         return ""
     url = str(url).strip()
     if not url:
         return ""
+    g = re.match(r"https?://github\.com/([^/]+)/([^/]+)/(?:blob|raw)/([^?#]+)", url)
+    if g:
+        return f"https://raw.githubusercontent.com/{g.group(1)}/{g.group(2)}/{g.group(3)}"
+    if base_url and not re.match(r"https?://", url) and not re.search(r"/d/|[?&]id=", url):
+        return base_url.rstrip("/") + "/" + quote(re.sub(r"^(\./|/)+", "", url), safe="/%")
     m = re.search(r"/d/([a-zA-Z0-9_-]+)", url)
     if not m:
         m = re.search(r"[?&]id=([a-zA-Z0-9_-]+)", url)
@@ -184,7 +196,7 @@ def build_slug_map(rows):
 
 
 PAGE_TEMPLATE = """<!DOCTYPE html>
-<html lang="en">
+<html lang="{lang}">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -193,14 +205,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 <link rel="canonical" href="{page_url}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Theyyam Calendar">
-<meta property="og:title" content="{title}">
-<meta property="og:description" content="{meta_description}">
+<meta property="og:title" content="{og_title}">
+<meta property="og:description" content="{og_description}">
 <meta property="og:image" content="{og_image}">
 <meta property="og:image:width" content="1000">
 <meta property="og:url" content="{page_url}">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="{title}">
-<meta name="twitter:description" content="{meta_description}">
+<meta name="twitter:title" content="{og_title}">
+<meta name="twitter:description" content="{og_description}">
 <meta name="twitter:image" content="{og_image}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap">
 <script type="application/ld+json">
@@ -253,6 +265,16 @@ img.kavu-photo{{max-width:100%;border-radius:8px;margin:10px 0}}
 """
 
 
+def fmt_date(value):
+    """'2027-01-30' -> '30 Jan 2027'. Anything unparseable is returned as-is."""
+    v = (value or "").strip()
+    try:
+        d = date.fromisoformat(v[:10])
+        return f"{d.day} {d.strftime('%b %Y')}"
+    except ValueError:
+        return v
+
+
 def line(label, value):
     return f"<p class=\"meta-line\"><strong>{h(label)}</strong> {h(value)}</p>" if value else ""
 
@@ -290,11 +312,21 @@ def build_page(row, slug, base_url, lang="en"):
         # Malayalam notice image and Malayalam title/description.
         title = f"{name_ml} - {theyyam_list_ml or name_ml} | Theyyam Calendar"
         meta_desc = f"{theyyam_list_ml or name_ml}, {place_ml}, {district_ml}. {start_date}{' - ' + end_date_val if end_date_val else ''}"
-        og_image = to_direct_image_url(image_ml) or to_direct_image_url(image_en) or DEFAULT_OG_IMAGE
+        og_image = to_direct_image_url(image_ml, base_url) or to_direct_image_url(image_en, base_url) or DEFAULT_OG_IMAGE
+        # Share-card (WhatsApp/Facebook) text: kavu name + theyyam list, then a
+        # short "dates · place" line. <title> above stays as the SEO title.
+        og_title = f"{name_ml} \u2013 {theyyam_list_ml}" if theyyam_list_ml else name_ml
+        _s, _e = fmt_date(start_date), fmt_date(end_date_val)
+        _dates = f"{_s} \u0d2e\u0d41\u0d24\u0d7d {_e} \u0d35\u0d30\u0d46" if _e and _e != _s else _s
+        og_description = " \u00b7 ".join(p for p in [_dates, ", ".join(q for q in [place_ml, district_ml] if q)] if p)
     else:
         title = f"{name_e} Kaliyattam & Theyyam Dates | Theyyam Calendar"
         meta_desc = f"{theyyam_list_e or name_e} at {place_e}, {district_e}. Dates: {start_date}{' to ' + end_date_val if end_date_val else ''}."
-        og_image = to_direct_image_url(image_en) or to_direct_image_url(image_ml) or DEFAULT_OG_IMAGE
+        og_image = to_direct_image_url(image_en, base_url) or to_direct_image_url(image_ml, base_url) or DEFAULT_OG_IMAGE
+        og_title = f"{name_e} \u2013 {theyyam_list_e}" if theyyam_list_e else name_e
+        _s, _e = fmt_date(start_date), fmt_date(end_date_val)
+        _dates = f"{_s} to {_e}" if _e and _e != _s else _s
+        og_description = " \u00b7 ".join(p for p in [_dates, ", ".join(q for q in [place_e, district_e] if q)] if p)
 
     lat, lon = parse_latlon(maplink)
     place_obj = {
@@ -323,11 +355,14 @@ def build_page(row, slug, base_url, lang="en"):
         "url": page_url,
     }
     if image_en or image_ml:
-        json_ld["image"] = image_en or image_ml
+        json_ld["image"] = to_direct_image_url(image_en or image_ml, base_url)
     if active_tags:
         json_ld["keywords"] = ", ".join(active_tags)
 
     html = PAGE_TEMPLATE.format(
+        lang=("ml" if lang == "ml" else "en"),
+        og_title=h(og_title),
+        og_description=h(og_description),
         title=h(title),
         meta_description=h(meta_desc),
         og_image=h(og_image),
@@ -341,7 +376,7 @@ def build_page(row, slug, base_url, lang="en"):
         theyyam_list_e=h(theyyam_list_e),
         kollavarsham_e_line=line("Kollavarsham year:", kollavarsham_e),
         contact_line=line("Contact:", contact_no),
-        image_en_html=(f'<img class="kavu-photo" src="{h(image_en)}" alt="{h(name_e)}">' if image_en else ""),
+        image_en_html=(f'<img class="kavu-photo" src="{h(to_direct_image_url(image_en, base_url))}" alt="{h(name_e)}">' if image_en else ""),
         description_e=h(description_e),
         scroll_box_e_html=(f"<p><em>{h(scroll_box_e)}</em></p>" if scroll_box_e else ""),
         tags_html=(
@@ -353,7 +388,7 @@ def build_page(row, slug, base_url, lang="en"):
         district=h(district_ml),
         theyyam_list=h(theyyam_list_ml),
         kollavarsham_line=line("കൊല്ലവർഷം:", kollavarsham_ml),
-        image_ml_html=(f'<img class="kavu-photo" src="{h(image_ml)}" alt="{h(name_ml)}">' if image_ml and image_ml != image_en else ""),
+        image_ml_html=(f'<img class="kavu-photo" src="{h(to_direct_image_url(image_ml, base_url))}" alt="{h(name_ml)}">' if image_ml and image_ml != image_en else ""),
         description=h(description_ml),
         scroll_box_html=(f"<p><em>{h(scroll_box_ml)}</em></p>" if scroll_box_ml else ""),
     )
