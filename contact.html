@@ -27,6 +27,12 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
 .contact-item{display:flex;align-items:center;gap:10px;margin:12px 0;font-size:1.05em}
 .contact-item i{color:#EF6C00;width:22px;text-align:center}
 .contact-item a{color:#1565C0;text-decoration:none;font-weight:700}
+.wa-join{display:flex;align-items:center;gap:16px;background:#e9f9ef;border:2px solid #25D366;border-radius:12px;padding:16px;margin:0 0 18px 0;text-decoration:none;color:#1b3b27}
+.wa-join:hover{background:#d9f5e3}
+.wa-join .wa-logo{flex:none;width:58px;height:58px;border-radius:50%;background:#25D366;color:#fff;display:flex;align-items:center;justify-content:center;font-size:34px}
+.wa-join strong{display:block;font-size:1.05em;color:#0b6b2e;margin-bottom:4px}
+.wa-join span{display:block;line-height:1.6;font-size:.95em}
+.wa-join .wa-go{display:inline-block;margin-top:6px;font-weight:700;color:#1565C0}
 .footer-note{text-align:center;margin-top:16px;color:#666;font-size:.85em}
 </style>
 </head>
@@ -37,6 +43,16 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
     <a class="back-link" href="index.html">← കലണ്ടറിലേക്ക് മടങ്ങുക / Back to Calendar</a>
   </div>
   <div class="content-box">
+    <a class="wa-join" href="https://chat.whatsapp.com/EZtQFGebQVrFyOR738EDMZ" target="_blank" rel="noopener noreferrer" aria-label="Join the Theyyam Calendar WhatsApp group">
+      <span class="wa-logo"><i class="fab fa-whatsapp"></i></span>
+      <span>
+        <strong>വാട്സ്ആപ്പ് ഗ്രൂപ്പിൽ ചേരൂ / Join our WhatsApp Group</strong>
+        <span>തെയ്യം യാത്രകൾ പ്ലാൻ ചെയ്യാനും കാവുകളിലെ വിവരങ്ങൾ അപ്ഡേറ്റ് ചെയ്യാനും ഗ്രൂപ്പിൽ ചേരൂ.</span>
+        <span>Join to plan Theyyam trips and keep kavu details up to date.</span>
+        <span>तेय्यम यात्राएँ प्लान करने और कावु की जानकारी अपडेट करने के लिए ग्रुप से जुड़ें।</span>
+        <span class="wa-go">ചേരാൻ ടാപ്പ് ചെയ്യൂ →</span>
+      </span>
+    </a>
     <h2>ഞങ്ങളെ ബന്ധപ്പെടാം</h2>
     <p>തെയ്യം വിവരങ്ങൾ, തിരുത്തലുകൾ, നിർദ്ദേശങ്ങൾ എന്നിവയ്ക്കായി ഞങ്ങളെ ബന്ധപ്പെടാം:</p>
     <div class="contact-item"><i class="fab fa-whatsapp"></i><span>WhatsApp: <a href="#">+919400303209</a></span></div>
@@ -47,5 +63,17 @@ body{font-family:'Noto Sans Malayalam',Arial,sans-serif;margin:0;padding:0;backg
   </div>
   <div class="footer-note">Theyyam Calendar</div>
 </div>
+<script>
+/* Android WebView / App Inventor app only: WebView ignores target="_blank" and window.open(),
+   which made every link look "dead" inside the Play Store app. Open them in the same view instead. */
+(function () {
+  if (!/; wv\)/.test(navigator.userAgent || '')) return;
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest && e.target.closest('a[target="_blank"]');
+    if (a && a.href) { e.preventDefault(); window.location.href = a.href; }
+  }, true);
+  window.open = function (u) { if (u) window.location.href = u; return null; };
+})();
+</script>
 </body>
 </html>

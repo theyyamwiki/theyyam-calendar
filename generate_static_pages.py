@@ -62,9 +62,10 @@ except OverflowError:
 
 OUTPUT_DIR = "kavu_pages"
 
-# Fallback image when a kavu row has no notice/photo of its own - keeps the
-# site's current behaviour (logo) as the safety net, never a broken image.
-DEFAULT_OG_IMAGE = "https://raw.githubusercontent.com/theyyamwiki/setting/main/logo-square.png"
+# NOTE: there is intentionally NO fallback image any more. When a kavu has no
+# notice image, the page carries no og:image / twitter:image at all, so
+# WhatsApp/Facebook/Telegram/X show a plain text card (name + place + dates)
+# instead of the site logo.
 
 # Rows whose `status` value (case-insensitive) is in this set are skipped.
 # Adjust this list once you know what values your `status` column actually uses.
@@ -205,16 +206,14 @@ PAGE_TEMPLATE = """<!DOCTYPE html>
 <link rel="canonical" href="{page_url}">
 <meta property="og:type" content="article">
 <meta property="og:site_name" content="Theyyam Calendar">
+<meta property="og:locale" content="{og_locale}">
 <meta property="og:title" content="{og_title}">
 <meta property="og:description" content="{og_description}">
-<meta property="og:image" content="{og_image}">
-<meta property="og:image:width" content="1000">
-<meta property="og:url" content="{page_url}">
-<meta name="twitter:card" content="summary_large_image">
+{og_image_tags}<meta property="og:url" content="{page_url}">
+<meta name="twitter:card" content="{twitter_card}">
 <meta name="twitter:title" content="{og_title}">
 <meta name="twitter:description" content="{og_description}">
-<meta name="twitter:image" content="{og_image}">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap">
+{twitter_image_tag}<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&display=swap">
 <script type="application/ld+json">
 {json_ld}
 </script>
@@ -235,7 +234,7 @@ img.kavu-photo{{max-width:100%;border-radius:8px;margin:10px 0}}
 <body>
 <div class="container">
   <div class="page-header">
-    <h1>{name_e}</h1>
+    <h1>{h1_name}</h1>
     <a class="back-link" href="../index.html">&larr; Back to Theyyam Calendar</a>
   </div>
   <div class="content-box">
@@ -258,6 +257,7 @@ img.kavu-photo{{max-width:100%;border-radius:8px;margin:10px 0}}
     {image_ml_html}
     <p>{description}</p>
     {scroll_box_html}
+    {hindi_section}
   </div>
 </div>
 </body>
@@ -279,54 +279,123 @@ def line(label, value):
     return f"<p class=\"meta-line\"><strong>{h(label)}</strong> {h(value)}</p>" if value else ""
 
 
+MONTHS = {
+    "en": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "ml": ["ജനുവരി", "ഫെബ്രുവരി", "മാർച്ച്", "ഏപ്രിൽ", "മേയ്", "ജൂൺ", "ജൂലൈ", "ഓഗസ്റ്റ്", "സെപ്റ്റംബർ", "ഒക്ടോബർ", "നവംബർ", "ഡിസംബർ"],
+    "hi": ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"],
+}
+
+
+def _parse_day(value):
+    try:
+        return date.fromisoformat((value or "").strip()[:10])
+    except ValueError:
+        return None
+
+
+def fmt_range(lang, start, end):
+    """Share-card date text, written fully in the page's own language:
+    en '2 to 3 Nov 2026', ml '2 മുതൽ 3 നവംബർ 2026 വരെ', hi '2 से 3 नवंबर 2026'."""
+    s_d, e_d = _parse_day(start), _parse_day(end)
+    if not s_d:
+        return (start or "").strip()
+    m = MONTHS[lang]
+    if not e_d or e_d == s_d:
+        return f"{s_d.day} {m[s_d.month - 1]} {s_d.year}"
+    if s_d.year == e_d.year and s_d.month == e_d.month:
+        a = f"{s_d.day}"
+    elif s_d.year == e_d.year:
+        a = f"{s_d.day} {m[s_d.month - 1]}"
+    else:
+        a = f"{s_d.day} {m[s_d.month - 1]} {s_d.year}"
+    b = f"{e_d.day} {m[e_d.month - 1]} {e_d.year}"
+    if lang == "ml":
+        return f"{a} മുതൽ {b} വരെ"
+    if lang == "hi":
+        return f"{a} से {b}"
+    return f"{a} to {b}"
+
+
+def pick_image(row, lang, base_url):
+    """Notice image for this language's page - same order the website uses.
+    Returns "" when the kavu has no notice image at all (-> text-only card)."""
+    en = row.get("image_url_en") or ""
+    ml = row.get("image_url") or ""
+    hi = row.get("image_url_hi") or ""
+    order = {"ml": [ml, en], "en": [en, ml], "hi": [hi, en, ml]}[lang]
+    for cand in order:
+        url = to_direct_image_url(cand, base_url)
+        if url:
+            return url
+    return ""
+
+
+PAGE_SUFFIX = {"en": "", "ml": "-ml", "hi": "-hi"}
+OG_LOCALE = {"en": "en_IN", "ml": "ml_IN", "hi": "hi_IN"}
+
+
 def build_page(row, slug, base_url, lang="en"):
     name_e = row.get("kavu_name_e") or row.get("kavu_name") or "Theyyam Kavu"
     name_ml = row.get("kavu_name") or name_e
+    name_h = row.get("kavu_name_h") or name_e
     place_e = row.get("place_e") or ""
     place_ml = row.get("place") or ""
+    place_h = row.get("place_h") or place_e
     district_e = row.get("district_e") or ""
     district_ml = row.get("district") or ""
+    district_h = row.get("district_h") or district_e
     start_date = row.get("start_date") or ""
     end_date_val = row.get("end_date") or ""
     theyyam_list_e = row.get("theyyam_list_e") or ""
     theyyam_list_ml = row.get("theyyam_list") or ""
+    theyyam_list_h = row.get("theyyam_list_h") or theyyam_list_e
     description_e = row.get("description_e") or ""
     description_ml = row.get("description") or ""
+    description_h = row.get("description_h") or ""
     image_en = row.get("image_url_en") or ""
     image_ml = row.get("image_url") or ""
+    image_hi = row.get("image_url_hi") or ""
     contact_no = row.get("contact_no") or ""
     kollavarsham_e = row.get("kollavarsham_e") or ""
     kollavarsham_ml = row.get("kollavarsham") or ""
+    kollavarsham_h = row.get("kollavarsham_h") or ""
     scroll_box_e = row.get("scroll_box_e") or ""
     scroll_box_ml = row.get("scroll_box") or ""
     maplink = row.get("googlemap_link") or ""
 
     active_tags = [label for col, label in TAG_COLUMNS.items() if is_truthy(row.get(col))]
 
-    file_suffix = "" if lang == "en" else "-ml"
-    page_url = f"{base_url.rstrip('/')}/kavu_pages/{slug}{file_suffix}.html"
+    page_url = f"{base_url.rstrip('/')}/kavu_pages/{slug}{PAGE_SUFFIX[lang]}.html"
 
+    dash_end = f" - {end_date_val}" if end_date_val else ""
     if lang == "ml":
-        # Malayalam-notice variant: share links opened while the site is in
-        # Malayalam point here, so the WhatsApp/Facebook preview shows the
-        # Malayalam notice image and Malayalam title/description.
+        nm, pl, di, ty = name_ml, place_ml, district_ml, theyyam_list_ml
         title = f"{name_ml} - {theyyam_list_ml or name_ml} | Theyyam Calendar"
-        meta_desc = f"{theyyam_list_ml or name_ml}, {place_ml}, {district_ml}. {start_date}{' - ' + end_date_val if end_date_val else ''}"
-        og_image = to_direct_image_url(image_ml, base_url) or to_direct_image_url(image_en, base_url) or DEFAULT_OG_IMAGE
-        # Share-card (WhatsApp/Facebook) text: kavu name + theyyam list, then a
-        # short "dates · place" line. <title> above stays as the SEO title.
-        og_title = f"{name_ml} \u2013 {theyyam_list_ml}" if theyyam_list_ml else name_ml
-        _s, _e = fmt_date(start_date), fmt_date(end_date_val)
-        _dates = f"{_s} \u0d2e\u0d41\u0d24\u0d7d {_e} \u0d35\u0d30\u0d46" if _e and _e != _s else _s
-        og_description = " \u00b7 ".join(p for p in [_dates, ", ".join(q for q in [place_ml, district_ml] if q)] if p)
+        meta_desc = f"{theyyam_list_ml or name_ml}, {place_ml}, {district_ml}. {start_date}{dash_end}"
+    elif lang == "hi":
+        nm, pl, di, ty = name_h, place_h, district_h, theyyam_list_h
+        title = f"{name_h} - {theyyam_list_h or name_h} | Theyyam Calendar"
+        meta_desc = f"{theyyam_list_h or name_h}, {place_h}, {district_h}. {start_date}{dash_end}"
     else:
+        nm, pl, di, ty = name_e, place_e, district_e, theyyam_list_e
         title = f"{name_e} Kaliyattam & Theyyam Dates | Theyyam Calendar"
         meta_desc = f"{theyyam_list_e or name_e} at {place_e}, {district_e}. Dates: {start_date}{' to ' + end_date_val if end_date_val else ''}."
-        og_image = to_direct_image_url(image_en, base_url) or to_direct_image_url(image_ml, base_url) or DEFAULT_OG_IMAGE
-        og_title = f"{name_e} \u2013 {theyyam_list_e}" if theyyam_list_e else name_e
-        _s, _e = fmt_date(start_date), fmt_date(end_date_val)
-        _dates = f"{_s} to {_e}" if _e and _e != _s else _s
-        og_description = " \u00b7 ".join(p for p in [_dates, ", ".join(q for q in [place_e, district_e] if q)] if p)
+
+    # Share card (WhatsApp / Facebook / Telegram / X): title = kavu name only,
+    # description = dates + place, both in the page's own language.
+    og_title = nm
+    place_line = ", ".join(q for q in [pl, di] if q)
+    og_description = " \u00b7 ".join(p for p in [fmt_range(lang, start_date, end_date_val), place_line] if p)
+
+    og_image = pick_image(row, lang, base_url)
+    if og_image:
+        og_image_tags = f'<meta property="og:image" content="{h(og_image)}">\n'
+        twitter_image_tag = f'<meta name="twitter:image" content="{h(og_image)}">\n'
+        twitter_card = "summary_large_image"
+    else:
+        og_image_tags = ""
+        twitter_image_tag = ""
+        twitter_card = "summary"
 
     lat, lon = parse_latlon(maplink)
     place_obj = {
@@ -354,21 +423,38 @@ def build_page(row, slug, base_url, lang="en"):
         "description": description_e or description_ml,
         "url": page_url,
     }
-    if image_en or image_ml:
-        json_ld["image"] = to_direct_image_url(image_en or image_ml, base_url)
+    if og_image:
+        json_ld["image"] = og_image
     if active_tags:
         json_ld["keywords"] = ", ".join(active_tags)
 
+    hindi_section = ""
+    if any(row.get(k) for k in ("kavu_name_h", "place_h", "theyyam_list_h", "description_h")):
+        img_hi_html = ""
+        if image_hi and image_hi not in (image_en, image_ml):
+            img_hi_html = f'<img class="kavu-photo" src="{h(to_direct_image_url(image_hi, base_url))}" alt="{h(name_h)}">'
+        hindi_section = (
+            "<h2>हिन्दी</h2>\n"
+            f'    <p class="meta-line"><strong>स्थान:</strong> {h(place_h)}, {h(district_h)}</p>\n'
+            f'    <p class="meta-line"><strong>तेय्यम:</strong> {h(theyyam_list_h)}</p>\n'
+            f"    {line('कोल्लवर्षम:', kollavarsham_h)}\n"
+            f"    {img_hi_html}\n"
+            f"    <p>{h(description_h)}</p>"
+        )
+
     html = PAGE_TEMPLATE.format(
-        lang=("ml" if lang == "ml" else "en"),
+        lang=lang,
+        og_locale=OG_LOCALE[lang],
         og_title=h(og_title),
         og_description=h(og_description),
+        og_image_tags=og_image_tags,
+        twitter_card=twitter_card,
+        twitter_image_tag=twitter_image_tag,
         title=h(title),
         meta_description=h(meta_desc),
-        og_image=h(og_image),
         page_url=h(page_url),
         json_ld=json.dumps(json_ld, ensure_ascii=False, indent=2),
-        name_e=h(name_e),
+        h1_name=h(nm),
         place_e=h(place_e),
         district_e=h(district_e),
         start_date=h(start_date),
@@ -391,6 +477,7 @@ def build_page(row, slug, base_url, lang="en"):
         image_ml_html=(f'<img class="kavu-photo" src="{h(to_direct_image_url(image_ml, base_url))}" alt="{h(name_ml)}">' if image_ml and image_ml != image_en else ""),
         description=h(description_ml),
         scroll_box_html=(f"<p><em>{h(scroll_box_ml)}</em></p>" if scroll_box_ml else ""),
+        hindi_section=hindi_section,
     )
     return html, name_e, place_e, district_e
 
@@ -472,13 +559,10 @@ def main():
         kavu_id = (row.get("kavu_id") or "").strip()
         slug = slug_map.get(kavu_id, slugify(kavu_id or "kavu"))
 
-        html_en, name_e, place_e, district_e = build_page(row, slug, base_url, lang="en")
-        with open(os.path.join(OUTPUT_DIR, f"{slug}.html"), "w", encoding="utf-8") as f:
-            f.write(html_en)
-
-        html_ml, _, _, _ = build_page(row, slug, base_url, lang="ml")
-        with open(os.path.join(OUTPUT_DIR, f"{slug}-ml.html"), "w", encoding="utf-8") as f:
-            f.write(html_ml)
+        for lang in ("en", "ml", "hi"):
+            page_html, name_e, place_e, district_e = build_page(row, slug, base_url, lang=lang)
+            with open(os.path.join(OUTPUT_DIR, f"{slug}{PAGE_SUFFIX[lang]}.html"), "w", encoding="utf-8") as f:
+                f.write(page_html)
 
         entries.append((slug, name_e, place_e, district_e))
 
@@ -500,7 +584,7 @@ def main():
     # index.html stays as it is, so there's no one-click browsable list of
     # every kavu on the site itself.
 
-    print(f"Generated {len(entries)} kavus x 2 language variants = {len(entries) * 2} pages in ./{OUTPUT_DIR}/")
+    print(f"Generated {len(entries)} kavus x 3 language variants = {len(entries) * 3} pages in ./{OUTPUT_DIR}/")
     print("Also wrote: sitemap.xml, robots.txt, kavu_slugs.json")
     print("\nNext steps:")
     print(f"1. Upload the whole '{OUTPUT_DIR}' folder, sitemap.xml and robots.txt to your site.")
