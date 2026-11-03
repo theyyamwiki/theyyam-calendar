@@ -185,11 +185,11 @@ function createSectionHeader(e,t){const a=document.createElement("h3");return a.
 (function () {
   if (!/; wv\)/.test(navigator.userAgent || '')) return;
   function openNoticeInBrowser(href) {
-    /* Open the notice form straight in the phone browser (WebView cannot open the gallery). */
-    var started = Date.now();
-    window.location.href = 'intent://' + href.replace(/^https?:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
-    /* If nothing happened (page still in front), fall back to opening it inside the app. */
-    setTimeout(function () { if (!document.hidden && Date.now() - started < 4000) window.location.href = href; }, 1500);
+    /* Newer app versions listen for this message (WebViewStringChange) and open the form in the
+       phone browser, where the gallery works. Older app versions ignore it, so after a short
+       moment the form simply opens inside the app as before. */
+    try { if (window.AppInventor && window.AppInventor.setWebViewString) window.AppInventor.setWebViewString('OPEN|' + Date.now() + '|' + href); } catch (err) {}
+    setTimeout(function () { if (!document.hidden) window.location.href = href; }, 800);
   }
   document.addEventListener('click', function (e) {
     /* Notice form has an image upload: WebView cannot open the gallery, so open this one
