@@ -184,7 +184,18 @@ function createSectionHeader(e,t){const a=document.createElement("h3");return a.
    which made every link look "dead" inside the Play Store app. Open them in the same view instead. */
 (function () {
   if (!/; wv\)/.test(navigator.userAgent || '')) return;
+  function openNoticeInBrowser(href) {
+    /* Open the notice form straight in the phone browser (WebView cannot open the gallery). */
+    var started = Date.now();
+    window.location.href = 'intent://' + href.replace(/^https?:\/\//, '') + '#Intent;scheme=https;action=android.intent.action.VIEW;end';
+    /* If nothing happened (page still in front), fall back to opening it inside the app. */
+    setTimeout(function () { if (!document.hidden && Date.now() - started < 4000) window.location.href = href; }, 1500);
+  }
   document.addEventListener('click', function (e) {
+    /* Notice form has an image upload: WebView cannot open the gallery, so open this one
+       link in the phone's browser (no app update needed). */
+    var n = e.target.closest && e.target.closest('#noticeAddLink');
+    if (n && n.href) { e.preventDefault(); openNoticeInBrowser(n.href); return; }
     var a = e.target.closest && e.target.closest('a[target="_blank"]');
     if (a && a.href) { e.preventDefault(); window.location.href = a.href; }
   }, true);
