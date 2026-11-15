@@ -161,7 +161,7 @@ function stripSched(raw){return schedSplit(raw).plain}
 function schedItem(txt){var s=String(txt||"").trim();if(!s)return null;var note=false;if(s.charAt(0)==="*"){note=true;s=s.slice(1).trim()}
 var time=null,m=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);
 if(m&&+m[1]<24&&+m[2]<60){time={h:+m[1],m:+m[2]};s=s.slice(m[0].length)}
-else{var w=Object.keys(SCHED_TW_IN).find(function(k){return s.indexOf(k)===0});if(w){time={w:SCHED_TW_IN[w]};s=s.slice(w.length).trim();var m2=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);if(m2&&+m2[1]<24&&+m2[2]<60){time={h:+m2[1],m:+m2[2]};s=s.slice(m2[0].length)}}}
+else{var w=Object.keys(SCHED_TW_IN).find(function(k){return s.indexOf(k)===0});if(w){var wk=SCHED_TW_IN[w];time={w:wk};s=s.slice(w.length).trim();var m2=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);if(m2&&+m2[1]<24&&+m2[2]<60){var hh=+m2[1];if(hh<13){if(wk==="evening"&&hh<12)hh+=12;else if(wk==="night"){if(hh>=6&&hh<12)hh+=12;else if(hh===12)hh=0}else if(wk==="noon"&&hh>=1&&hh<=5)hh+=12}time={h:hh,m:+m2[2]};s=s.slice(m2[0].length)}}}
 var type="",tm=/\(([^()]*)\)\s*$/.exec(s);if(tm){type=tm[1].trim();s=s.slice(0,tm.index)}
 s=s.trim();if(!s)return null;return{note:note,time:time,name:s,type:type,key:schedKey(s)}}
 function schedParse(e){if(!e)return null;if(e.__sched!==undefined)return e.__sched;var res=null;
