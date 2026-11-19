@@ -152,7 +152,7 @@ var SCHED_TW_IN={"പുലർച്ചെ":"dawn","രാവിലെ":"morning
 /* names of types / ceremonies are transliterated, never translated. Add more here any time. */
 var SCHED_TYPE_T={"വെള്ളാട്ടം":{en:"Vellattam",hi:"वेल्लाट्टम"},"തോറ്റം":{en:"Thottam",hi:"तोट्टम"},"പുറപ്പാട്":{en:"Purappadu",hi:"पुरप्पाडु"},"തിരുപ്പുറപ്പാട്":{en:"Thiruppurappadu",hi:"तिरुप्पुरप्पाडु"}};
 var SCHED_NOTE_T={"ഗണപതിഹോമം":{en:"Ganapathihomam",hi:"गणपतिहोमम"},"ഗുരുപൂജ":{en:"Gurupooja",hi:"गुरुपूजा"},"കളിയാട്ട സമാപനം":{en:"Kaliyattam Samapanam",hi:"कलियाट्ट समापनम्"}};
-function schedKey(s){return TY_NORM(String(s||"").replace(/([\u0d15-\u0d39])\u0d4d\1/g,"$1").replace(/ന്\u200d/g,"ൻ").replace(/ര്\u200d/g,"ർ").replace(/ല്\u200d/g,"ൽ").replace(/ള്\u200d/g,"ൾ").replace(/ണ്\u200d/g,"ൺ"))}
+function schedKey(s){return TY_NORM(String(s||"").replace(/ന്\u200d/g,"ൻ").replace(/ര്\u200d/g,"ർ").replace(/ല്\u200d/g,"ൽ").replace(/ള്\u200d/g,"ൾ").replace(/ണ്\u200d/g,"ൺ"))}
 function schedNormMap(src){var o={};Object.keys(src).forEach(function(k){o[schedKey(k)]=src[k]});return o}
 var SCHED_TYPE_N=schedNormMap(SCHED_TYPE_T),SCHED_NOTE_N=schedNormMap(SCHED_NOTE_T);
 function schedLang(map,raw){if(currentLang==="ml")return raw;var o=map[schedKey(raw)];return o?(o[currentLang]||o.en||raw):raw}
@@ -161,7 +161,7 @@ function stripSched(raw){return schedSplit(raw).plain}
 function schedItem(txt){var s=String(txt||"").trim();if(!s)return null;var note=false;if(s.charAt(0)==="*"){note=true;s=s.slice(1).trim()}
 var time=null,m=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);
 if(m&&+m[1]<24&&+m[2]<60){time={h:+m[1],m:+m[2]};s=s.slice(m[0].length)}
-else{var w=Object.keys(SCHED_TW_IN).find(function(k){return s.indexOf(k)===0});if(w){var wk=SCHED_TW_IN[w];time={w:wk};s=s.slice(w.length).trim();var m2=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);if(m2&&+m2[1]<24&&+m2[2]<60){var hh=+m2[1];if(hh<13){if(wk==="evening"&&hh<12)hh+=12;else if(wk==="night"){if(hh>=6&&hh<12)hh+=12;else if(hh===12)hh=0}else if(wk==="noon"&&hh>=1&&hh<=5)hh+=12}time={h:hh,m:+m2[2]};s=s.slice(m2[0].length)}}}
+else{var w=Object.keys(SCHED_TW_IN).find(function(k){return s.indexOf(k)===0});if(w){time={w:SCHED_TW_IN[w]};s=s.slice(w.length).trim();var m2=/^(\d{1,2})[:.](\d{2})\s*/.exec(s);if(m2&&+m2[1]<24&&+m2[2]<60){time={h:+m2[1],m:+m2[2]};s=s.slice(m2[0].length)}}}
 var type="",tm=/\(([^()]*)\)\s*$/.exec(s);if(tm){type=tm[1].trim();s=s.slice(0,tm.index)}
 s=s.trim();if(!s)return null;return{note:note,time:time,name:s,type:type,key:schedKey(s)}}
 function schedParse(e){if(!e)return null;if(e.__sched!==undefined)return e.__sched;var res=null;
@@ -257,11 +257,20 @@ function createSectionHeader(e,t){const a=document.createElement("h3");return a.
    which made every link look "dead" inside the Play Store app. Open them in the same view instead. */
 (function () {
   if (!/; wv\)/.test(navigator.userAgent || '')) return;
+  /* New app versions set the WebView string to "APPV2" in Screen1.Initialize (before GoToUrl).
+     We remember that here, so the in-app fallback below is skipped for them. */
+  var appV2 = false;
+  try {
+    var wvs = (window.AppInventor && window.AppInventor.getWebViewString) ? String(window.AppInventor.getWebViewString() || '') : '';
+    if (wvs.indexOf('APPV2') === 0) { appV2 = true; try { sessionStorage.setItem('appv2', '1'); } catch (e2) {} }
+    else { try { appV2 = sessionStorage.getItem('appv2') === '1'; } catch (e3) {} }
+  } catch (e1) {}
   function openNoticeInBrowser(href) {
-    /* Newer app versions listen for this message (WebViewStringChange) and open the form in the
-       phone browser, where the gallery works. Older app versions ignore it, so after a short
-       moment the form simply opens inside the app as before. */
+    /* Newer app versions listen for this message (WebViewStringChange) and open the link in the
+       phone browser / Maps app, where the gallery works. Older app versions ignore it, so after a
+       short moment the link simply opens inside the app as before. */
     try { if (window.AppInventor && window.AppInventor.setWebViewString) window.AppInventor.setWebViewString('OPEN|' + Date.now() + '|' + href); } catch (err) {}
+    if (appV2) return; /* the app opens it outside; do not also navigate inside the app */
     setTimeout(function () { if (!document.hidden) window.location.href = href; }, 800);
   }
   document.addEventListener('click', function (e) {
