@@ -2,7 +2,7 @@
 (function () {
   'use strict';
 
-  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbxqtwxuyfahkhpr0QG9RKaXDNF6oJ7eqBDjIWXDMrvncC6XjI2xzrpKtCUU49wa73_f/exec';
+  var ENDPOINT = 'https://script.google.com/macros/s/AKfycbzgk_zeeYA1SDNFXrNoYRJe-l15a-89uoJl2JhXzjCKyD8KIvONM7H_9jOcMgJ5OhBY/exec';
   var MAX_B64 = 2800000; // സെർവർ പരിധി 3,000,000
 
   var TXT = {
