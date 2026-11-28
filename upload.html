@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ml">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Theyyam Calendar – Notice</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Malayalam:wght@400;700&family=Noto+Sans+Devanagari:wght@400;700&display=fallback">
+<style>
+  body{font-family:'Noto Sans Malayalam','Noto Sans Devanagari',Arial,sans-serif;margin:0;background:#500300;color:#333}
+  .box{max-width:520px;margin:20px auto;padding:18px;background:#fffaf6;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.3)}
+  .top{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .top img{width:46px;height:46px;border-radius:10px}
+  h1{font-size:1.25em;margin:0;color:#c62828}
+  .back{display:inline-block;margin-top:16px;color:#1565C0;text-decoration:none;font-size:.9em}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="top"><img src="lang-logo.png" alt=""><h1 id="ttl"></h1></div>
+  <div id="app"></div>
+  <a class="back" href="index.html">← Theyyam Calendar</a>
+</div>
+<script src="notice-upload.js"></script>
+<script>
+  document.getElementById('ttl').textContent = NoticeUpload.text('title');
+  NoticeUpload.mount(document.getElementById('app'));
+</script>
+</body>
+</html>
